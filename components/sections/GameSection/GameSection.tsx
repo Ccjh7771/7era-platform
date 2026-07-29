@@ -1,4 +1,5 @@
 import { GameCard } from "@/components/ui/GameCard";
+import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { games } from "@/lib/data/games";
 
@@ -13,18 +14,23 @@ export function GameSection() {
       id="games"
       className={sectionStyles}
     >
-      <SectionHeader
-        badge="PREMIUM GAMES"
-        title="Explore Our Games"
-        description="Discover popular mobile gaming platforms with smooth performance, exciting rewards and easy access."
-      />
+      <Reveal>
+        <SectionHeader
+          badge="PREMIUM GAMES"
+          title="Explore Our Games"
+          description="Discover popular mobile gaming platforms with smooth performance, exciting rewards and easy access."
+        />
+      </Reveal>
 
       <div className={gridStyles}>
-        {games.map((game) => (
-          <GameCard
+        {games.map((game, index) => (
+          <Reveal
             key={game.id}
-            game={game}
-          />
+            delay={index * 80}
+            className="h-full"
+          >
+            <GameCard game={game} />
+          </Reveal>
         ))}
       </div>
     </section>

@@ -12,7 +12,7 @@ export function Reveal({
   children,
   className = "",
   delay = 0,
-  distance = 28,
+  distance = 24,
   once = true,
 }: RevealProps) {
   const elementRef = useRef<HTMLDivElement>(null);
@@ -47,8 +47,8 @@ export function Reveal({
         }
       },
       {
-        threshold: 0.14,
-        rootMargin: "0px 0px -60px 0px",
+        threshold: 0.15,
+        rootMargin: "0px 0px -48px 0px",
       },
     );
 
@@ -62,12 +62,9 @@ export function Reveal({
   return (
     <div
       ref={elementRef}
-      className={`transition-[opacity,transform] duration-700 ease-out will-change-transform ${
-        isVisible
-          ? "translate-y-0 opacity-100"
-          : "opacity-0"
-      } ${className}`}
+      className={`transition-[opacity,transform] duration-700 ease-out ${className}`}
       style={{
+        opacity: isVisible ? 1 : 0,
         transform: isVisible
           ? "translateY(0)"
           : `translateY(${distance}px)`,
