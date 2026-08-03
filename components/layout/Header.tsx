@@ -10,15 +10,19 @@ const navigationItems = [
   },
   {
     title: "Brands",
-    href: "#brands",
+    href: "/#brands",
   },
   {
     title: "Games",
-    href: "#games",
+    href: "/#games",
+  },
+  {
+    title: "Downloads",
+    href: "/download",
   },
   {
     title: "Contact",
-    href: "#contact",
+    href: "/#contact",
   },
 ];
 
@@ -91,7 +95,7 @@ export function Header() {
         </Link>
 
         <nav
-          className="hidden items-center gap-10 md:flex"
+          className="hidden items-center gap-8 md:flex lg:gap-10"
           aria-label="Main navigation"
         >
           {navigationItems.map((item) => (
@@ -109,7 +113,7 @@ export function Header() {
 
         <div className="flex items-center gap-3">
           <Link
-            href="#contact"
+            href="/#contact"
             className="
               hidden
               rounded-full
@@ -202,7 +206,7 @@ export function Header() {
         id="mobile-navigation"
         className={`overflow-hidden border-t transition-all duration-500 md:hidden ${
           mobileMenuOpen
-            ? "max-h-[520px] border-white/10 opacity-100"
+            ? "max-h-[600px] border-white/10 opacity-100"
             : "max-h-0 border-transparent opacity-0"
         }`}
       >
@@ -248,7 +252,7 @@ export function Header() {
           </nav>
 
           <Link
-            href="#contact"
+            href="/#contact"
             onClick={closeMobileMenu}
             className="
               mt-5
