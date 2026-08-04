@@ -7,10 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 
 function isValidPassword(password: string) {
     return (
-        password.length >= 6 &&
+        password.length >= 12 &&
         password.length <= 72 &&
-        /[A-Za-z]/.test(password) &&
-        /[0-9]/.test(password)
+        /[a-z]/.test(password) &&
+        /[A-Z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        /[^A-Za-z0-9]/.test(password)
     );
 }
 
