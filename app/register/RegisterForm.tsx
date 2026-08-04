@@ -22,11 +22,11 @@ export function RegisterForm() {
             <dd className="mt-1 font-mono text-lg font-bold text-white">{state.phone}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wider text-zinc-500">Temporary password</dt>
+            <dt className="text-xs uppercase tracking-wider text-zinc-500">6-digit temporary password</dt>
             <dd className="mt-1 break-all font-mono text-lg font-bold text-yellow-300">{state.temporaryPassword}</dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs leading-5 text-amber-200">You must create a new password after your first sign-in.</p>
+        <p className="mt-4 text-xs leading-5 text-amber-200">You must create a new 6-digit password after your first sign-in.</p>
         <Link href="/member/login" className="mt-6 flex h-14 items-center justify-center rounded-2xl bg-yellow-400 font-black text-black">
           Continue to member login
         </Link>
