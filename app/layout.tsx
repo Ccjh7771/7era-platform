@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { getWebsiteSettings } from "@/lib/data/get-website-settings";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,61 +13,45 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://7era.com"),
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getWebsiteSettings();
 
-  title: {
-    default: "7ERA Platform",
-    template: "%s | 7ERA Platform",
-  },
-
-  description:
-    "Premium gaming platform featuring trusted brands, mobile game downloads and 24/7 customer support.",
-
-  applicationName: "7ERA Platform",
-
-  keywords: [
-    "7ERA",
-    "Gaming",
-    "Gaming Platform",
-    "Mobile Games",
-    "Game Download",
-    "Online Platform",
-    "Customer Support",
-  ],
-
-  authors: [
-    {
-      name: "7ERA Platform",
+  return {
+    metadataBase: new URL(settings.siteUrl),
+    title: {
+      default: settings.seoTitle,
+      template: `%s | ${settings.shortName}`,
     },
-  ],
-
-  creator: "7ERA Platform",
-
-  publisher: "7ERA Platform",
-
-  robots: {
-    index: true,
-    follow: true,
-  },
-
-  openGraph: {
-    title: "7ERA Platform",
-    description:
-      "Premium gaming platform featuring trusted brands, mobile game downloads and 24/7 customer support.",
-    url: "https://7era.com",
-    siteName: "7ERA Platform",
-    locale: "en_US",
-    type: "website",
-  },
-
-  twitter: {
-    card: "summary_large_image",
-    title: "7ERA Platform",
-    description:
-      "Premium gaming platform featuring trusted brands, mobile game downloads and 24/7 customer support.",
-  },
-};
+    description: settings.seoDescription,
+    applicationName: settings.siteName,
+    keywords: [
+      settings.shortName,
+      "Gaming",
+      "Gaming Platform",
+      "Mobile Games",
+      "Game Download",
+      "Online Platform",
+      "Customer Support",
+    ],
+    authors: [{ name: settings.siteName }],
+    creator: settings.siteName,
+    publisher: settings.siteName,
+    robots: { index: true, follow: true },
+    openGraph: {
+      title: settings.seoTitle,
+      description: settings.seoDescription,
+      url: settings.siteUrl,
+      siteName: settings.siteName,
+      locale: "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: settings.seoTitle,
+      description: settings.seoDescription,
+    },
+  };
+}
 
 export default function RootLayout({
   children,

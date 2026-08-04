@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-export function Footer() {
+import { getWebsiteSettings } from "@/lib/data/get-website-settings";
+
+export async function Footer() {
+  const settings = await getWebsiteSettings();
+
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-gradient-to-b from-zinc-950 via-black to-black">
       {/* Background Glow */}
@@ -35,12 +39,11 @@ export function Footer() {
           {/* Brand */}
           <div>
             <h2 className="bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-300 bg-clip-text text-3xl font-black text-transparent">
-              7ERA
+              {settings.shortName}
             </h2>
 
             <p className="mt-4 max-w-sm leading-7 text-zinc-400">
-              Premium gaming platform providing trusted brands,
-              premium experiences and reliable customer support.
+              {settings.tagline}
             </p>
           </div>
 
@@ -110,21 +113,25 @@ export function Footer() {
 
             <div className="mt-5 flex flex-col gap-3">
               <a
-                href="#"
+                href={settings.whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-zinc-400 transition hover:text-yellow-300"
               >
                 WhatsApp
               </a>
 
               <a
-                href="#"
+                href={settings.heylinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-zinc-400 transition hover:text-yellow-300"
               >
                 HeyLink
               </a>
 
               <a
-                href="mailto:support@7era.com"
+                href={`mailto:${settings.supportEmail}`}
                 className="text-zinc-400 transition hover:text-yellow-300"
               >
                 Email
@@ -135,7 +142,7 @@ export function Footer() {
 
         <div className="mt-16 border-t border-white/10 pt-8 text-center">
           <p className="text-sm text-zinc-500">
-            © 2018 7ERA Platform. All Rights Reserved.
+            {settings.copyrightText}
           </p>
         </div>
       </div>

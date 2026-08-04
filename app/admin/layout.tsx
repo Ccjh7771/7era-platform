@@ -47,7 +47,6 @@ const adminNavigation: AdminNavigationItem[] = [
         label: "Settings",
         href: "/admin/settings",
         ownerOnly: true,
-        available: false,
     },
 ];
 
