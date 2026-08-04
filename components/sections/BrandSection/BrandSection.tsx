@@ -1,14 +1,16 @@
 import { BrandCard } from "@/components/ui/BrandCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { brands } from "@/lib/data/brands";
+import { getActiveBrands } from "@/lib/data/get-brands";
 
 import {
   gridStyles,
   sectionStyles,
 } from "./BrandSection.styles";
 
-export function BrandSection() {
+export async function BrandSection() {
+  const brands = await getActiveBrands();
+
   return (
     <section
       id="brands"
