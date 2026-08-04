@@ -1,14 +1,16 @@
 import { GameCard } from "@/components/ui/GameCard";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { games } from "@/lib/data/games";
+import { getActiveGames } from "@/lib/data/get-games";
 
 import {
   gridStyles,
   sectionStyles,
 } from "./GameSection.styles";
 
-export function GameSection() {
+export async function GameSection() {
+  const games = await getActiveGames();
+
   return (
     <section
       id="games"

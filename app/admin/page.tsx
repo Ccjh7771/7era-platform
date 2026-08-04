@@ -22,6 +22,7 @@ const dashboardCards = [
   {
     label: "Games",
     value: "6",
+    href: "/admin/games",
   },
   {
     label: "Downloads",
@@ -107,12 +108,16 @@ const managementLinks = [
 export default async function AdminPage() {
   const adminClient = createAdminClient();
 
-  const { count: brandCount } = await adminClient
-    .from("brands")
-    .select("id", {
+  const [brandResult, gameResult] = await Promise.all([
+    adminClient.from("brands").select("id", {
       count: "exact",
       head: true,
-    });
+    }),
+    adminClient.from("games").select("id", {
+      count: "exact",
+      head: true,
+    }),
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -140,8 +145,13 @@ export default async function AdminPage() {
               card.label === "Brands"
                 ? {
                     ...card,
-                    value: String(brandCount ?? 0),
+                    value: String(brandResult.count ?? 0),
                   }
+                : card.label === "Games"
+                  ? {
+                      ...card,
+                      value: String(gameResult.count ?? 0),
+                    }
                 : card
             }
           />

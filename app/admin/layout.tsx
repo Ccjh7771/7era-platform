@@ -30,7 +30,6 @@ const adminNavigation: AdminNavigationItem[] = [
     {
         label: "Games",
         href: "/admin/games",
-        available: false,
     },
     {
         label: "Downloads",
