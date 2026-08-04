@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | 7ERA Platform",
@@ -15,22 +14,18 @@ const dashboardCards = [
   {
     label: "Brands",
     value: "4",
-    href: "/admin/brands",
   },
   {
     label: "Games",
     value: "6",
-    href: "/admin/games",
   },
   {
     label: "Downloads",
     value: "6",
-    href: "/admin/downloads",
   },
   {
     label: "Promotions",
     value: "6",
-    href: "/admin/promotions",
   },
 ];
 
@@ -39,25 +34,21 @@ const managementLinks = [
     title: "Manage Downloads",
     description:
       "Update versions, platform links, file sizes and availability.",
-    href: "/admin/downloads",
   },
   {
     title: "Manage Promotions",
     description:
       "Create campaigns, change statuses and update promotion content.",
-    href: "/admin/promotions",
   },
   {
     title: "Manage FAQ",
     description:
       "Create, edit, reorder and hide frequently asked questions.",
-    href: "/admin/faq",
   },
   {
     title: "Website Settings",
     description:
       "Manage website identity, navigation, contact links and SEO.",
-    href: "/admin/settings",
   },
 ];
 
@@ -82,10 +73,9 @@ export default function AdminPage() {
 
       <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardCards.map((card) => (
-          <Link
+          <div
             key={card.label}
-            href={card.href}
-            className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-black p-6 transition duration-300 hover:-translate-y-1 hover:border-yellow-400/30"
+            className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-black p-6"
           >
             <p className="text-sm font-semibold text-zinc-500">
               {card.label}
@@ -96,9 +86,9 @@ export default function AdminPage() {
             </p>
 
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">
-              Manage content →
+              Module coming soon
             </p>
-          </Link>
+          </div>
         ))}
       </section>
 
@@ -115,10 +105,9 @@ export default function AdminPage() {
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           {managementLinks.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group rounded-[24px] border border-white/10 bg-white/[0.04] p-6 transition duration-300 hover:border-yellow-400/30 hover:bg-yellow-400/[0.06]"
+            <div
+              key={item.title}
+              className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6"
             >
               <div className="flex items-start justify-between gap-5">
                 <div>
@@ -131,27 +120,24 @@ export default function AdminPage() {
                   </p>
                 </div>
 
-                <span
-                  className="text-xl text-yellow-300 transition group-hover:translate-x-1"
-                  aria-hidden="true"
-                >
-                  →
+                <span className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                  Coming soon
                 </span>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
 
       <div className="mt-12 rounded-[24px] border border-amber-400/20 bg-amber-400/[0.06] p-6">
         <h2 className="font-bold text-amber-200">
-          Development-only dashboard
+          Secure admin dashboard
         </h2>
 
         <p className="mt-2 text-sm leading-7 text-amber-100/70">
-          This route is not protected yet. Do not enter private information,
-          credentials or production data until authentication and authorization
-          are added.
+          Authentication and role checks are active. Content modules will be
+          enabled one at a time as their database workflows are completed and
+          tested.
         </p>
       </div>
     </div>
