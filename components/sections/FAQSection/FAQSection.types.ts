@@ -1,6 +1,10 @@
-import type { FAQCategory } from "@/lib/data/faq";
+import type { FAQCategory, FAQItem } from "@/lib/data/faq";
 
 export interface FAQCategoryOption {
   id: "all" | FAQCategory;
   label: string;
+}
+
+export interface FAQSectionProps {
+  faqItems: FAQItem[];
 }

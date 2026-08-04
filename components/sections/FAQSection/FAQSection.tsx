@@ -7,7 +7,6 @@ import { Accordion } from "@/components/ui/Accordion";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Tabs } from "@/components/ui/Tabs";
-import { sortedFaq } from "@/lib/data/faq";
 
 import {
   backgroundGlowStyles,
@@ -33,7 +32,10 @@ import {
   tabsStyles,
 } from "./FAQSection.styles";
 
-import type { FAQCategoryOption } from "./FAQSection.types";
+import type {
+  FAQCategoryOption,
+  FAQSectionProps,
+} from "./FAQSection.types";
 
 const faqCategories: FAQCategoryOption[] = [
   {
@@ -62,14 +64,14 @@ const faqCategories: FAQCategoryOption[] = [
   },
 ];
 
-export function FAQSection() {
+export function FAQSection({ faqItems }: FAQSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
   const visibleFaqItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return sortedFaq.filter((item) => {
+    return faqItems.filter((item) => {
       if (!item.visible) {
         return false;
       }
@@ -85,7 +87,7 @@ export function FAQSection() {
 
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchQuery]);
+  }, [activeCategory, faqItems, searchQuery]);
 
   const accordionItems = visibleFaqItems.map((item) => ({
     id: item.id,
