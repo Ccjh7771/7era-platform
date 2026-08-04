@@ -34,7 +34,6 @@ const adminNavigation: AdminNavigationItem[] = [
     {
         label: "Downloads",
         href: "/admin/downloads",
-        available: false,
     },
     {
         label: "Promotions",

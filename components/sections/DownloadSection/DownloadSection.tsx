@@ -7,9 +7,9 @@ import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Tabs } from "@/components/ui/Tabs";
 import {
-  downloads,
   downloadPlatforms,
 } from "@/lib/data/downloads";
+import type { DownloadItem } from "@/lib/data/downloads";
 
 import {
   backgroundGlowStyles,
@@ -91,7 +91,11 @@ const faqItems = [
 ];
 
 
-export function DownloadSection() {
+export function DownloadSection({
+  downloads,
+}: {
+  downloads: DownloadItem[];
+}) {
     
   const [activePlatform, setActivePlatform] = useState("all");
 
@@ -103,7 +107,7 @@ export function DownloadSection() {
     return downloads.filter(
       (download) => download.platform === activePlatform,
     );
-  }, [activePlatform]);
+  }, [activePlatform, downloads]);
 
   return (
     <section
