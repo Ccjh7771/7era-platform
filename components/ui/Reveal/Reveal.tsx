@@ -30,8 +30,13 @@ export function Reveal({
     ).matches;
 
     if (prefersReducedMotion) {
-      setIsVisible(true);
-      return;
+      const frameId = window.requestAnimationFrame(
+        () => setIsVisible(true),
+      );
+
+      return () => {
+        window.cancelAnimationFrame(frameId);
+      };
     }
 
     const observer = new IntersectionObserver(

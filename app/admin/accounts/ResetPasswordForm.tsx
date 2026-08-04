@@ -31,10 +31,10 @@ export function ResetPasswordForm({
                     name="temporaryPassword"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={12}
                     maxLength={72}
                     autoComplete="new-password"
-                    placeholder="Example: abc123"
+                    placeholder="Create a strong temporary password"
                     className="h-12 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/50 px-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-yellow-400/50"
                 />
 
@@ -47,10 +47,10 @@ export function ResetPasswordForm({
             </div>
 
             <p className="mt-2 text-xs leading-5 text-zinc-600">
-                Minimum 6 characters with at least
-                one letter and one number. The staff
-                member will be required to change it
-                after login.
+                12–72 characters with uppercase,
+                lowercase, a number and a symbol. The
+                staff member will be required to change
+                it after login.
             </p>
         </form>
     );

@@ -14,7 +14,7 @@ type UpdatePasswordPageProps = {
 
 const errorMessages: Record<string, string> = {
     invalid:
-        "Please check all password fields. The new passwords must match and contain at least one letter and one number.",
+        "Passwords must match and contain 12–72 characters with uppercase, lowercase, a number and a symbol.",
     update_failed:
     "Unable to update the password. Please try again.",
     profile_failed:
@@ -102,7 +102,7 @@ export default async function UpdatePasswordPage({
                             name="newPassword"
                             type="password"
                             required
-                            minLength={6}
+                            minLength={12}
                             maxLength={72}
                             autoComplete="new-password"
                             placeholder="Enter new password"
@@ -110,9 +110,9 @@ export default async function UpdatePasswordPage({
                         />
 
                         <p className="mt-2 text-xs leading-5 text-zinc-600">
-                            Minimum 6 characters with at
-                            least one letter and one
-                            number.
+                            12–72 characters with
+                            uppercase, lowercase, a
+                            number and a symbol.
                         </p>
                     </div>
 
@@ -129,7 +129,7 @@ export default async function UpdatePasswordPage({
                             name="confirmPassword"
                             type="password"
                             required
-                            minLength={6}
+                            minLength={12}
                             maxLength={72}
                             autoComplete="new-password"
                             placeholder="Enter new password again"

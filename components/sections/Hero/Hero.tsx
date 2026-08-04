@@ -25,8 +25,6 @@ import {
   heroVisualTitleStyles,
 } from "./Hero.styles";
 
-import type { HeroProps } from "./Hero.types";
-
 const heroBrands = [
   {
     name: "SC Club",
@@ -42,10 +40,7 @@ const heroBrands = [
   },
 ];
 
-export function Hero({
-  title = "7ERA Ultimate Platform",
-  subtitle = "Build Once. Scale Forever.",
-}: HeroProps) {
+export function Hero() {
   return (
     <section className={heroSectionStyles}>
       <div

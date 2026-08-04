@@ -16,7 +16,7 @@ type AdminAccountsPageProps = {
 
 const errorMessages: Record<string, string> = {
     invalid_reset:
-        "Enter a temporary password with at least 6 characters, including a letter and a number.",
+        "Enter a temporary password with 12–72 characters, including uppercase, lowercase, number and symbol.",
     reset_not_allowed:
         "This account password cannot be reset from here.",
     reset_failed:
@@ -278,7 +278,7 @@ export default async function AdminAccountsPage({
                                 name="temporaryPassword"
                                 type="password"
                                 required
-                                minLength={6}
+                                minLength={12}
                                 maxLength={72}
                                 autoComplete="new-password"
                                 placeholder="Create a temporary password"
@@ -286,9 +286,9 @@ export default async function AdminAccountsPage({
                             />
 
                             <p className="mt-2 text-xs leading-5 text-zinc-600">
-                                Minimum 6 characters with
-                                at least one letter and one
-                                number.
+                                12–72 characters with
+                                uppercase, lowercase, a
+                                number and a symbol.
                             </p>
                         </div>
 
