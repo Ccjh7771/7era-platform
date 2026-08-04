@@ -66,7 +66,33 @@ const installationSteps: InstallationStep[] = [
   },
 ];
 
+
+const faqItems = [
+  {
+    question: "Are these official download links?",
+    answer:
+      "Yes. All active download buttons on this page connect to official or verified 7ERA Platform download sources.",
+  },
+  {
+    question: "Why is a download button unavailable?",
+    answer:
+      "The application may be undergoing maintenance or its latest version may not be ready for your selected platform.",
+  },
+  {
+    question: "Can I install the application on any device?",
+    answer:
+      "Availability depends on the application and your device platform. Use the platform tabs above to view compatible downloads.",
+  },
+  {
+    question: "What should I do if installation is blocked?",
+    answer:
+      "Check your device security settings and confirm that you downloaded the application using an official link from this page.",
+  },
+];
+
+
 export function DownloadSection() {
+    
   const [activePlatform, setActivePlatform] = useState("all");
 
   const visibleDownloads = useMemo(() => {
@@ -201,6 +227,58 @@ export function DownloadSection() {
                 Download applications only from links provided by 7ERA Platform
                 or its verified official channels.
               </p>
+            </div>
+          </Reveal>
+                </div>
+
+        <div
+          id="download-faq"
+          className={faqSectionStyles}
+        >
+          <Reveal distance={32}>
+            <div className={faqPanelStyles}>
+              <div className={faqHeaderStyles}>
+                <span className={faqBadgeStyles}>
+                  Download FAQ
+                </span>
+
+                <h2 className={faqTitleStyles}>
+                  Frequently asked questions
+                </h2>
+
+                <p className={faqDescriptionStyles}>
+                  Find answers to common questions about downloads,
+                  compatibility and installation.
+                </p>
+              </div>
+
+              <div className={faqListStyles}>
+                {faqItems.map((item, index) => (
+                  <Reveal
+                    key={item.question}
+                    delay={index * 70}
+                  >
+                    <details className="group overflow-hidden rounded-2xl border border-white/10 bg-black/25 transition duration-300 open:border-yellow-400/25 open:bg-yellow-400/[0.04]">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-6 px-5 py-5 text-left text-base font-bold text-white sm:px-6">
+                        <span>{item.question}</span>
+
+                        <span
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-yellow-400/20 bg-yellow-400/10 text-lg text-yellow-300 transition-transform duration-300 group-open:rotate-45"
+                          aria-hidden="true"
+                        >
+                          +
+                        </span>
+                      </summary>
+
+                      <div className="border-t border-white/10 px-5 py-5 sm:px-6">
+                        <p className="max-w-3xl text-sm leading-7 text-zinc-400">
+                          {item.answer}
+                        </p>
+                      </div>
+                    </details>
+                  </Reveal>
+                ))}
+              </div>
             </div>
           </Reveal>
         </div>

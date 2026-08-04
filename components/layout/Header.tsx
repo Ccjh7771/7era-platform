@@ -20,6 +20,14 @@ const navigationItems = [
     title: "Downloads",
     href: "/download",
   },
+    {
+    title: "Promotions",
+    href: "/promotions",
+  },
+  {
+    title: "FAQ",
+    href: "/faq",
+  },
   {
     title: "Contact",
     href: "/#contact",
@@ -95,7 +103,7 @@ export function Header() {
         </Link>
 
         <nav
-          className="hidden items-center gap-8 md:flex lg:gap-10"
+          className="hidden items-center gap-8 md:flex lg:gap-9"
           aria-label="Main navigation"
         >
           {navigationItems.map((item) => (
