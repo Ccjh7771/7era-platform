@@ -2,7 +2,11 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateTemporaryPassword } from "@/lib/member/password";
-import { displayMalaysianPhone, normalizeMalaysianPhone } from "@/lib/member/phone";
+import {
+  displayMalaysianPhone,
+  memberEmailForPhone,
+  normalizeMalaysianPhone,
+} from "@/lib/member/phone";
 
 export type RegistrationState = {
   status: "idle" | "error" | "success";
@@ -52,9 +56,9 @@ export async function registerMember(
 
   const temporaryPassword = generateTemporaryPassword();
   const { data: createdData, error: createError } = await adminClient.auth.admin.createUser({
-    phone,
+    email: memberEmailForPhone(phone),
     password: temporaryPassword,
-    phone_confirm: true,
+    email_confirm: true,
     app_metadata: { account_type: "member" },
     user_metadata: { full_name: fullName, phone },
   });
@@ -66,6 +70,26 @@ export async function registerMember(
       message: createError?.message.toLowerCase().includes("registered")
         ? "This mobile number is already registered."
         : "Unable to create the account. Please try again.",
+    };
+  }
+
+  const { error: profileError } = await adminClient.from("member_profiles").upsert(
+    {
+      id: createdData.user.id,
+      phone,
+      full_name: fullName,
+      status: "active",
+      must_change_password: true,
+    },
+    { onConflict: "id" },
+  );
+
+  if (profileError) {
+    console.error("Member profile creation failed:", profileError.message);
+    await adminClient.auth.admin.deleteUser(createdData.user.id);
+    return {
+      status: "error",
+      message: "Unable to create the account. Please try again.",
     };
   }
 

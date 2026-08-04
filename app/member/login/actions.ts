@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { normalizeMalaysianPhone } from "@/lib/member/phone";
+import { memberEmailForPhone, normalizeMalaysianPhone } from "@/lib/member/phone";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +16,7 @@ export async function loginMember(formData: FormData) {
 
   const supabase = await createClient();
   const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-    phone,
+    email: memberEmailForPhone(phone),
     password,
   });
 

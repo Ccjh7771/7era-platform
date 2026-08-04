@@ -26,3 +26,7 @@ export function displayMalaysianPhone(phone: string) {
 
   return `${national.slice(0, prefixLength)}-${national.slice(prefixLength, prefixLength + 3)}-${national.slice(prefixLength + 3)}`;
 }
+
+export function memberEmailForPhone(phone: string) {
+  return `member.${phone.replace(/\D/g, "")}@members.7era.invalid`;
+}
