@@ -117,7 +117,7 @@ create table public.member_profiles (
     last_login_at timestamptz,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    constraint member_phone_format check (phone ~ '^\\+60[0-9]{8,10}$'),
+    constraint member_phone_format check (phone ~ '^\+60[0-9]{8,10}$'),
     constraint member_full_name_length check (char_length(full_name) between 2 and 100)
 );
 
