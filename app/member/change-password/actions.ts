@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { isStrongMemberPassword } from "@/lib/member/password";
+import { isSixDigitMemberPassword } from "@/lib/member/password";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,7 +10,7 @@ export async function changeMemberPassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-  if (!isStrongMemberPassword(password) || password !== confirmPassword) {
+  if (!isSixDigitMemberPassword(password) || password !== confirmPassword) {
     redirect("/member/change-password?required=1&error=invalid");
   }
 

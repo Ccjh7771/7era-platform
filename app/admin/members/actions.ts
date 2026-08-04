@@ -21,7 +21,7 @@ export async function resetMemberPassword(previousState: ResetMemberState, formD
   const { error: profileError } = await client.from("member_profiles").update({ must_change_password: true, updated_at: new Date().toISOString() }).eq("id", memberId);
   if (profileError) return { status: "error", message: "Password changed, but the member flag could not be updated." };
   revalidatePath("/admin/members");
-  return { status: "success", message: "Give this one-time password to the member. It is shown only here.", password };
+  return { status: "success", message: "Give this 6-digit temporary password to the member. It is shown only here.", password };
 }
 
 export async function setMemberStatus(formData: FormData) {

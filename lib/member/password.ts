@@ -1,26 +1,11 @@
 import "server-only";
 
-import { randomBytes } from "node:crypto";
-
-const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+import { randomInt } from "node:crypto";
 
 export function generateTemporaryPassword() {
-  const bytes = randomBytes(10);
-  let randomPart = "";
-
-  for (const byte of bytes) {
-    randomPart += alphabet[byte % alphabet.length];
-  }
-
-  return `Era7!${randomPart}`;
+  return String(randomInt(100_000, 1_000_000));
 }
 
-export function isStrongMemberPassword(password: string) {
-  return (
-    password.length >= 10 &&
-    password.length <= 72 &&
-    /[a-z]/.test(password) &&
-    /[A-Z]/.test(password) &&
-    /[0-9]/.test(password)
-  );
+export function isSixDigitMemberPassword(password: string) {
+  return /^\d{6}$/.test(password);
 }
