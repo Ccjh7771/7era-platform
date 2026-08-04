@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { Card } from "@/components/ui/Card";
+import { isActionableHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
 
 import {
@@ -53,6 +54,8 @@ export function DownloadCard({
 }: DownloadCardProps) {
   const platformLabel =
     platformLabels[platform];
+  const isDownloadUnavailable =
+    disabled || !isActionableHref(downloadUrl);
 
   return (
     <Card
@@ -129,7 +132,7 @@ export function DownloadCard({
         </dl>
 
         <div className={actionsStyles}>
-          {disabled ? (
+          {isDownloadUnavailable ? (
             <span
               className={cn(
                 downloadLinkStyles,

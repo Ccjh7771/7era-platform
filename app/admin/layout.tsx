@@ -55,6 +55,10 @@ export default async function AdminLayout({
     children: ReactNode;
 }>) {
     const adminProfile = await requireAdmin();
+    const visibleNavigation = adminNavigation.filter(
+        (item) =>
+            !item.ownerOnly || adminProfile.role === "owner",
+    );
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white">
@@ -82,12 +86,7 @@ export default async function AdminLayout({
                     className="mt-10 flex flex-col gap-2"
                     aria-label="Admin navigation"
                 >
-                    {adminNavigation
-                        .filter(
-                            (item) =>
-                                !item.ownerOnly ||
-                                adminProfile.role === "owner",
-                        )
+                    {visibleNavigation
                         .map((item) =>
                             item.available !== false ? (
                                 <Link
@@ -165,6 +164,24 @@ export default async function AdminLayout({
                         </form>
                     </div>
                 </header>
+
+                <nav
+                    className="sticky top-20 z-30 flex gap-2 overflow-x-auto border-b border-white/10 bg-black/90 px-6 py-3 backdrop-blur-2xl lg:hidden"
+                    aria-label="Mobile admin navigation"
+                >
+                    {visibleNavigation
+                        .filter((item) => item.available !== false)
+                        .map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                prefetch={false}
+                                className="shrink-0 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-bold text-zinc-300 transition hover:border-yellow-400/30 hover:text-yellow-300"
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
+                </nav>
 
                 <main className="px-6 py-10 lg:px-10">
                     {children}

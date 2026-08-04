@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/Card";
+import { isActionableHref } from "@/lib/links";
 import { cn } from "@/lib/utils";
 
 import {
@@ -60,7 +61,9 @@ export function PromotionCard({
   disabled = false,
   className,
 }: PromotionCardProps) {
-  const isUnavailable = disabled || status === "ended";
+  const hasDestination = isActionableHref(href);
+  const isUnavailable =
+    disabled || status === "ended" || !hasDestination;
 
   return (
     <Card
@@ -152,7 +155,9 @@ export function PromotionCard({
               <span>
                 {status === "ended"
                   ? "Promotion Ended"
-                  : "Unavailable"}
+                  : hasDestination
+                    ? "Unavailable"
+                    : "Coming Soon"}
               </span>
             </span>
           ) : (

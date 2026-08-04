@@ -1,9 +1,12 @@
 import Link from "next/link";
 
 import { getWebsiteSettings } from "@/lib/data/get-website-settings";
+import { isActionableHref } from "@/lib/links";
 
 export async function Footer() {
   const settings = await getWebsiteSettings();
+  const hasWhatsApp = isActionableHref(settings.whatsappUrl);
+  const hasHeyLink = isActionableHref(settings.heylinkUrl);
 
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-gradient-to-b from-zinc-950 via-black to-black">
@@ -112,23 +115,35 @@ export async function Footer() {
             </h3>
 
             <div className="mt-5 flex flex-col gap-3">
-              <a
-                href={settings.whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-400 transition hover:text-yellow-300"
-              >
-                WhatsApp
-              </a>
+              {hasWhatsApp ? (
+                <a
+                  href={settings.whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-zinc-400 transition hover:text-yellow-300"
+                >
+                  WhatsApp
+                </a>
+              ) : (
+                <span className="text-zinc-600" aria-disabled="true">
+                  WhatsApp — Coming Soon
+                </span>
+              )}
 
-              <a
-                href={settings.heylinkUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-400 transition hover:text-yellow-300"
-              >
-                HeyLink
-              </a>
+              {hasHeyLink ? (
+                <a
+                  href={settings.heylinkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-zinc-400 transition hover:text-yellow-300"
+                >
+                  HeyLink
+                </a>
+              ) : (
+                <span className="text-zinc-600" aria-disabled="true">
+                  HeyLink — Coming Soon
+                </span>
+              )}
 
               <a
                 href={`mailto:${settings.supportEmail}`}
