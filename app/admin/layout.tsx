@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 import type { ReactNode } from "react";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin/access";
 
 import { logoutAdmin } from "./actions";
 
@@ -55,45 +54,7 @@ export default async function AdminLayout({
 }: Readonly<{
     children: ReactNode;
 }>) {
-    const supabase = await createClient();
-
-    const {
-        data: claimsData,
-        error: claimsError,
-    } = await supabase.auth.getClaims();
-
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const {
-        data: adminProfile,
-        error: profileError,
-    } = await supabase
-        .from("admin_profiles")
-        .select(
-            "full_name, role, is_active, must_change_password",
-        )
-        .eq("id", userId)
-        .single();
-
-    if (
-        profileError ||
-        !adminProfile ||
-        !adminProfile.is_active
-    ) {
-        redirect(
-            "/auth/login?error=unauthorized",
-        );
-    }
-
-    if (adminProfile.must_change_password) {
-        redirect(
-            "/auth/update-password?required=1",
-        );
-    }
+    const adminProfile = await requireAdmin();
 
     return (
         <div className="min-h-screen bg-zinc-950 text-white">
@@ -186,7 +147,7 @@ export default async function AdminLayout({
                     <div className="flex items-center gap-4">
                         <div className="hidden text-right sm:block">
                             <p className="text-sm font-bold text-white">
-                                {adminProfile.full_name}
+                                {adminProfile.fullName}
                             </p>
 
                             <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] text-yellow-300">

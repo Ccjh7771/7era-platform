@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireContentEditor } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 type BrandInput = {
     name: string;
@@ -32,11 +32,6 @@ const logoExtensions: Record<string, string> = {
     "image/png": "png",
     "image/webp": "webp",
 };
-
-const editableRoles = new Set([
-    "owner",
-    "editor",
-]);
 
 function isValidLink(value: string) {
     if (value === "#") {
@@ -257,36 +252,7 @@ async function removeLogo(
 }
 
 async function requireBrandEditor() {
-    const supabase = await createClient();
-
-    const {
-        data: claimsData,
-        error: claimsError,
-    } = await supabase.auth.getClaims();
-
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const {
-        data: adminProfile,
-        error: profileError,
-    } = await supabase
-        .from("admin_profiles")
-        .select("role, is_active")
-        .eq("id", userId)
-        .single();
-
-    if (
-        profileError ||
-        !adminProfile ||
-        !adminProfile.is_active ||
-        !editableRoles.has(adminProfile.role)
-    ) {
-        redirect("/admin/brands?error=forbidden");
-    }
+    await requireContentEditor("/admin/brands?error=forbidden");
 }
 
 function refreshBrandPages() {

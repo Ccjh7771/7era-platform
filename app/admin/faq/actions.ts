@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireContentEditor } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 type FAQCategory =
     | "download"
@@ -21,7 +21,6 @@ type FAQInput = {
     sort_order: number;
 };
 
-const editableRoles = new Set(["owner", "editor"]);
 const allowedCategories = new Set([
     "download",
     "promotion",
@@ -64,30 +63,7 @@ function parseFAQInput(formData: FormData): FAQInput | null {
 }
 
 async function requireFAQEditor() {
-    const supabase = await createClient();
-    const { data: claimsData, error: claimsError } =
-        await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const { data: adminProfile, error: profileError } =
-        await supabase
-            .from("admin_profiles")
-            .select("role, is_active")
-            .eq("id", userId)
-            .single();
-
-    if (
-        profileError ||
-        !adminProfile ||
-        !adminProfile.is_active ||
-        !editableRoles.has(adminProfile.role)
-    ) {
-        redirect("/admin/faq?error=forbidden");
-    }
+    await requireContentEditor("/admin/faq?error=forbidden");
 }
 
 function refreshFAQPages() {
