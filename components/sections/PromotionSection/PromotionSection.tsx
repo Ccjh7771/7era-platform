@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
 import { Accordion } from "@/components/ui/Accordion";
 import { PromotionCard } from "@/components/ui/PromotionCard";
@@ -88,40 +85,11 @@ const promotionFaqItems = [
     },
 ];
 
-export function PromotionSection() {
-    const [promotions, setPromotions] = useState<PromotionItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
-
-    useEffect(() => {
-        async function loadPromotions() {
-            try {
-                setLoading(true);
-                setError(false);
-
-                const response = await fetch("/api/promotions");
-
-                if (!response.ok) {
-                    throw new Error("Failed to load promotions");
-                }
-
-                const data: PromotionItem[] = await response.json();
-
-                setPromotions(
-                    [...data].sort(
-                        (firstPromotion, secondPromotion) =>
-                            firstPromotion.priority - secondPromotion.priority,
-                    ),
-                );
-            } catch {
-                setError(true);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        void loadPromotions();
-    }, []);
+export function PromotionSection({
+    promotions,
+}: {
+    promotions: PromotionItem[];
+}) {
     return (
         <section
             id="promotions"
@@ -146,54 +114,29 @@ export function PromotionSection() {
                     />
                 </Reveal>
 
-                {loading && (
-                    <div className={gridStyles}>
-                        {Array.from({ length: 6 }).map((_, index) => (
-                            <div
-                                key={index}
-                                className="min-h-[620px] animate-pulse rounded-[28px] border border-white/10 bg-white/[0.05]"
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {error && (
-                    <div className="mt-16 rounded-[28px] border border-red-400/20 bg-red-400/[0.06] px-6 py-14 text-center">
-                        <h2 className="text-2xl font-black text-white">
-                            Promotions unavailable
-                        </h2>
-
-                        <p className="mt-3 text-sm leading-7 text-zinc-400">
-                            We could not load the latest promotions. Please try again later.
-                        </p>
-                    </div>
-                )}
-
-                {!loading && !error && (
-                    <div className={gridStyles}>
-                        {promotions.map((promotion, index) => (
-                            <Reveal
-                                key={promotion.id}
-                                delay={index * 80}
+                <div className={gridStyles}>
+                    {promotions.map((promotion, index) => (
+                        <Reveal
+                            key={promotion.id}
+                            delay={index * 80}
+                            className="h-full"
+                        >
+                            <PromotionCard
+                                title={promotion.title}
+                                subtitle={promotion.subtitle}
+                                description={promotion.description}
+                                category={promotion.category}
+                                validityLabel={promotion.validityLabel}
+                                image={promotion.image}
+                                href={promotion.href}
+                                status={promotion.status}
+                                featured={promotion.featured}
+                                disabled={promotion.disabled}
                                 className="h-full"
-                            >
-                                <PromotionCard
-                                    title={promotion.title}
-                                    subtitle={promotion.subtitle}
-                                    description={promotion.description}
-                                    category={promotion.category}
-                                    validityLabel={promotion.validityLabel}
-                                    image={promotion.image}
-                                    href={promotion.href}
-                                    status={promotion.status}
-                                    featured={promotion.featured}
-                                    disabled={promotion.disabled}
-                                    className="h-full"
-                                />
-                            </Reveal>
-                        ))}
-                    </div>
-                )}
+                            />
+                        </Reveal>
+                    ))}
+                </div>
 
                 <div className={benefitsSectionStyles}>
                     <Reveal distance={32}>

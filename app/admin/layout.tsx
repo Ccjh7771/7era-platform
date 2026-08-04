@@ -38,7 +38,6 @@ const adminNavigation: AdminNavigationItem[] = [
     {
         label: "Promotions",
         href: "/admin/promotions",
-        available: false,
     },
     {
         label: "FAQ",

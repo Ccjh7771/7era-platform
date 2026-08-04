@@ -29,6 +29,13 @@ const nextConfig: NextConfig = {
                 pathname:
                     "/storage/v1/object/public/download-logos/**",
             },
+            {
+                protocol: "https",
+                hostname:
+                    "imkfmynzsnjckdzctwpp.supabase.co",
+                pathname:
+                    "/storage/v1/object/public/promotion-images/**",
+            },
         ],
     },
 };
