@@ -94,21 +94,25 @@ const managementLinks = [
     title: "Manage Downloads",
     description:
       "Update versions, platform links, file sizes and availability.",
+    href: "/admin/downloads",
   },
   {
     title: "Manage Promotions",
     description:
       "Create campaigns, change statuses and update promotion content.",
+    href: "/admin/promotions",
   },
   {
     title: "Manage FAQ",
     description:
       "Create, edit, reorder and hide frequently asked questions.",
+    href: "/admin/faq",
   },
   {
     title: "Website Settings",
     description:
       "Manage website identity, navigation, contact links and SEO.",
+    href: "/admin/settings",
   },
 ];
 
@@ -156,9 +160,8 @@ export default async function AdminPage() {
         </h1>
 
         <p className="mt-4 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-          This is the CMS foundation for managing website content. The current
-          dashboard uses static sample data and will later connect to the
-          database and secured admin accounts.
+          Manage live website content, support information and administrator
+          access from this secured dashboard.
         </p>
       </div>
 
@@ -211,9 +214,11 @@ export default async function AdminPage() {
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           {managementLinks.map((item) => (
-            <div
+            <Link
               key={item.title}
-              className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6"
+              href={item.href}
+              prefetch={false}
+              className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6 transition hover:border-yellow-400/30"
             >
               <div className="flex items-start justify-between gap-5">
                 <div>
@@ -227,10 +232,10 @@ export default async function AdminPage() {
                 </div>
 
                 <span className="shrink-0 rounded-full border border-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-                  Coming soon
+                  Open
                 </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -241,9 +246,8 @@ export default async function AdminPage() {
         </h2>
 
         <p className="mt-2 text-sm leading-7 text-amber-100/70">
-          Authentication and role checks are active. Content modules will be
-          enabled one at a time as their database workflows are completed and
-          tested.
+          Authentication and role checks are active. Editors manage content,
+          viewers have read-only access and owner-only controls remain protected.
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { getWebsiteSettings } from "@/lib/data/get-website-settings";
 
 import {
     actionListStyles,
@@ -37,7 +38,9 @@ const supportFeatures = [
     },
 ];
 
-export function ContactSection() {
+export async function ContactSection() {
+    const settings = await getWebsiteSettings();
+
     return (
         <section
             id="contact"
@@ -55,8 +58,8 @@ export function ContactSection() {
                             <div className={leftStyles}>
                                 <SectionHeader
                                     badge="CUSTOMER SUPPORT"
-                                    title="Need assistance with our platform?"
-                                    description="Our support team is available to help with account enquiries, platform access, game downloads and general assistance."
+                                    title={settings.supportHeading}
+                                    description={settings.supportDescription}
                                     align="left"
                                     showDot
                                 />
@@ -92,7 +95,7 @@ export function ContactSection() {
 
                                     <div className={actionListStyles}>
                                         <a
-                                            href="#"
+                                            href={settings.whatsappUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className={`group ${primaryLinkStyles}`}
@@ -108,7 +111,7 @@ export function ContactSection() {
                                         </a>
 
                                         <a
-                                            href="#"
+                                            href={settings.heylinkUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className={`group ${secondaryLinkStyles}`}
