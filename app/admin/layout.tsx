@@ -42,7 +42,6 @@ const adminNavigation: AdminNavigationItem[] = [
     {
         label: "FAQ",
         href: "/admin/faq",
-        available: false,
     },
     {
         label: "Settings",

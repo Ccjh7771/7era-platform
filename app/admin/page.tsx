@@ -34,6 +34,11 @@ const dashboardCards = [
     value: "6",
     href: "/admin/promotions",
   },
+  {
+    label: "FAQ",
+    value: "6",
+    href: "/admin/faq",
+  },
 ];
 
 type DashboardCardData = {
@@ -115,6 +120,7 @@ export default async function AdminPage() {
     gameResult,
     downloadResult,
     promotionResult,
+    faqResult,
   ] = await Promise.all([
     adminClient.from("brands").select("id", {
       count: "exact",
@@ -129,6 +135,10 @@ export default async function AdminPage() {
       head: true,
     }),
     adminClient.from("promotions").select("id", {
+      count: "exact",
+      head: true,
+    }),
+    adminClient.from("faq_items").select("id", {
       count: "exact",
       head: true,
     }),
@@ -152,7 +162,7 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
         {dashboardCards.map((card) => (
           <DashboardCard
             key={card.label}
@@ -177,6 +187,11 @@ export default async function AdminPage() {
                           ...card,
                           value: String(promotionResult.count ?? 0),
                         }
+                      : card.label === "FAQ"
+                        ? {
+                            ...card,
+                            value: String(faqResult.count ?? 0),
+                          }
                 : card
             }
           />
