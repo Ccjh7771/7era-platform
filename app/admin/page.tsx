@@ -32,6 +32,7 @@ const dashboardCards = [
   {
     label: "Promotions",
     value: "6",
+    href: "/admin/promotions",
   },
 ];
 
@@ -109,7 +110,12 @@ const managementLinks = [
 export default async function AdminPage() {
   const adminClient = createAdminClient();
 
-  const [brandResult, gameResult, downloadResult] = await Promise.all([
+  const [
+    brandResult,
+    gameResult,
+    downloadResult,
+    promotionResult,
+  ] = await Promise.all([
     adminClient.from("brands").select("id", {
       count: "exact",
       head: true,
@@ -119,6 +125,10 @@ export default async function AdminPage() {
       head: true,
     }),
     adminClient.from("downloads").select("id", {
+      count: "exact",
+      head: true,
+    }),
+    adminClient.from("promotions").select("id", {
       count: "exact",
       head: true,
     }),
@@ -162,6 +172,11 @@ export default async function AdminPage() {
                         ...card,
                         value: String(downloadResult.count ?? 0),
                       }
+                    : card.label === "Promotions"
+                      ? {
+                          ...card,
+                          value: String(promotionResult.count ?? 0),
+                        }
                 : card
             }
           />
