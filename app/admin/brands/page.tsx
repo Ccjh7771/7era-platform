@@ -9,6 +9,7 @@ import {
     setBrandStatus,
     updateBrand,
 } from "./actions";
+import { LogoUploadField } from "./LogoUploadField";
 
 type AdminBrandsPageProps = {
     searchParams: Promise<{
@@ -36,6 +37,10 @@ const errorMessages: Record<string, string> = {
         "Check the brand fields and try again.",
     duplicate:
         "A brand with this name already exists.",
+    invalid_logo:
+        "Choose a valid PNG, JPG or WebP image up to 2MB.",
+    upload_failed:
+        "The logo could not be uploaded. Please try again.",
     server:
         "The brand could not be saved. Please try again.",
 };
@@ -91,26 +96,11 @@ function BrandFields({
                 />
             </div>
 
-            <div>
-                <label
-                    htmlFor={`${idPrefix}-logo-path`}
-                    className="text-sm font-semibold text-zinc-200"
-                >
-                    Logo path
-                </label>
-
-                <input
-                    id={`${idPrefix}-logo-path`}
-                    name="logoPath"
-                    type="text"
-                    required
-                    maxLength={500}
-                    pattern="/[^/].*"
-                    defaultValue={brand?.logo_path}
-                    placeholder="/brands/brand.png"
-                    className={inputClassName}
-                />
-            </div>
+            <LogoUploadField
+                currentLogoUrl={brand?.logo_path}
+                idPrefix={idPrefix}
+                required={!brand}
+            />
 
             <div className="sm:col-span-2">
                 <label
