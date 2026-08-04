@@ -1,6 +1,7 @@
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getWebsiteSettings } from "@/lib/data/get-website-settings";
+import { isActionableHref } from "@/lib/links";
 
 import {
     actionListStyles,
@@ -40,6 +41,8 @@ const supportFeatures = [
 
 export async function ContactSection() {
     const settings = await getWebsiteSettings();
+    const hasWhatsApp = isActionableHref(settings.whatsappUrl);
+    const hasHeyLink = isActionableHref(settings.heylinkUrl);
 
     return (
         <section
@@ -94,37 +97,43 @@ export async function ContactSection() {
                                     </p>
 
                                     <div className={actionListStyles}>
-                                        <a
-                                            href={settings.whatsappUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={`group ${primaryLinkStyles}`}
-                                        >
-                                            <span>WhatsApp Support</span>
-
-                                            <span
-                                                className={arrowStyles}
-                                                aria-hidden="true"
+                                        {hasWhatsApp ? (
+                                            <a
+                                                href={settings.whatsappUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`group ${primaryLinkStyles}`}
                                             >
-                                                →
-                                            </span>
-                                        </a>
-
-                                        <a
-                                            href={settings.heylinkUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={`group ${secondaryLinkStyles}`}
-                                        >
-                                            <span>Official HeyLink</span>
-
+                                                <span>WhatsApp Support</span>
+                                                <span className={arrowStyles} aria-hidden="true">→</span>
+                                            </a>
+                                        ) : (
                                             <span
-                                                className={arrowStyles}
-                                                aria-hidden="true"
+                                                className={`${primaryLinkStyles} cursor-not-allowed opacity-50 grayscale`}
+                                                aria-disabled="true"
                                             >
-                                                →
+                                                WhatsApp Coming Soon
                                             </span>
-                                        </a>
+                                        )}
+
+                                        {hasHeyLink ? (
+                                            <a
+                                                href={settings.heylinkUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={`group ${secondaryLinkStyles}`}
+                                            >
+                                                <span>Official HeyLink</span>
+                                                <span className={arrowStyles} aria-hidden="true">→</span>
+                                            </a>
+                                        ) : (
+                                            <span
+                                                className={`${secondaryLinkStyles} cursor-not-allowed opacity-50 grayscale`}
+                                                aria-disabled="true"
+                                            >
+                                                HeyLink Coming Soon
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>

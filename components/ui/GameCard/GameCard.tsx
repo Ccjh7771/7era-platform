@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { Card } from "@/components/ui/Card";
+import { isActionableHref } from "@/lib/links";
 
 import type { GameCardProps } from "./GameCard.types";
 
@@ -25,6 +26,7 @@ export function GameCard({
     0,
     Math.min(5, Math.round(game.rating)),
   );
+  const hasDownload = isActionableHref(game.download);
 
   return (
     <Card
@@ -66,12 +68,21 @@ export function GameCard({
         </div>
 
         <div className={actionsStyles}>
-          <a
-            href={game.download}
-            className={downloadButtonStyles}
-          >
-            Download Game
-          </a>
+          {hasDownload ? (
+            <a
+              href={game.download}
+              className={downloadButtonStyles}
+            >
+              Download Game
+            </a>
+          ) : (
+            <span
+              className={`${downloadButtonStyles} cursor-not-allowed opacity-50 grayscale`}
+              aria-disabled="true"
+            >
+              Coming Soon
+            </span>
+          )}
         </div>
       </div>
     </Card>

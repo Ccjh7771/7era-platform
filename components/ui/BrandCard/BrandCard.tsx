@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { Card } from "@/components/ui/Card";
+import { isActionableHref } from "@/lib/links";
 
 import {
   actionsStyles,
@@ -23,6 +24,8 @@ export function BrandCard({ brand }: BrandCardProps) {
     0,
     Math.min(5, Math.round(brand.rating)),
   );
+  const hasWhatsApp = isActionableHref(brand.whatsapp);
+  const hasHeyLink = isActionableHref(brand.heylink);
 
   return (
     <Card
@@ -64,23 +67,41 @@ export function BrandCard({ brand }: BrandCardProps) {
         </div>
 
         <div className={actionsStyles}>
-          <a
-            href={brand.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={whatsappLinkStyles}
-          >
-            WhatsApp
-          </a>
+          {hasWhatsApp ? (
+            <a
+              href={brand.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={whatsappLinkStyles}
+            >
+              WhatsApp
+            </a>
+          ) : (
+            <span
+              className={`${whatsappLinkStyles} cursor-not-allowed opacity-50 grayscale`}
+              aria-disabled="true"
+            >
+              WhatsApp Soon
+            </span>
+          )}
 
-          <a
-            href={brand.heylink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={heylinkStyles}
-          >
-            HeyLink
-          </a>
+          {hasHeyLink ? (
+            <a
+              href={brand.heylink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={heylinkStyles}
+            >
+              HeyLink
+            </a>
+          ) : (
+            <span
+              className={`${heylinkStyles} cursor-not-allowed opacity-50 grayscale`}
+              aria-disabled="true"
+            >
+              HeyLink Soon
+            </span>
+          )}
         </div>
       </div>
     </Card>
