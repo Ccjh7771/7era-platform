@@ -12,5 +12,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/auth/:path*",
+    "/member/:path*",
+    "/register",
   ],
 };

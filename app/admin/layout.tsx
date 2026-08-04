@@ -23,6 +23,22 @@ const adminNavigation: AdminNavigationItem[] = [
         ownerOnly: true,
     },
     {
+        label: "Members",
+        href: "/admin/members",
+    },
+    {
+        label: "Daily Rewards",
+        href: "/admin/daily-rewards",
+    },
+    {
+        label: "Lucky Spin",
+        href: "/admin/lucky-spin",
+    },
+    {
+        label: "Live Chat",
+        href: "/admin/live-chat",
+    },
+    {
         label: "Brands",
         href: "/admin/brands",
     },
@@ -83,7 +99,7 @@ export default async function AdminLayout({
                 </Link>
 
                 <nav
-                    className="mt-10 flex flex-col gap-2"
+                    className="mt-10 flex max-h-[calc(100vh-220px)] flex-col gap-2 overflow-y-auto pb-24 pr-1"
                     aria-label="Admin navigation"
                 >
                     {visibleNavigation

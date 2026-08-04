@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-labelledby="title description">
+  <title id="title">7ERA Lucky Spin</title>
+  <description id="description">Gold circular 7ERA Lucky Spin logo on a transparent background.</description>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3a3"/>
+      <stop offset="0.35" stop-color="#facc15"/>
+      <stop offset="0.72" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#b45309"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g transform="translate(18 10)" fill="none" stroke="url(#gold)" filter="url(#glow)">
+    <circle cx="100" cy="100" r="86" stroke-width="7"/>
+    <circle cx="100" cy="100" r="68" stroke-width="2" opacity=".55"/>
+    <path d="M100 14v22M100 164v22M14 100h22M164 100h22M39 39l16 16M145 145l16 16M161 39l-16 16M55 145l-16 16" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="118" y="143" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="116" font-weight="900" fill="url(#gold)">7</text>
+  <g font-family="Arial,Helvetica,sans-serif" fill="url(#gold)">
+    <text x="224" y="96" font-size="58" font-weight="900" letter-spacing="5">7ERA</text>
+    <text x="225" y="160" font-size="55" font-weight="800" letter-spacing="8">LUCKY SPIN</text>
+  </g>
+</svg>

@@ -20,7 +20,7 @@ const navigationItems = [
   { title: "Downloads", href: "/download" },
   { title: "Promotions", href: "/promotions" },
   { title: "FAQ", href: "/faq" },
-  { title: "Contact", href: "/#contact" },
+  { title: "Members", href: "/member/login" },
 ];
 
 export function HeaderClient({
@@ -120,6 +120,12 @@ export function HeaderClient({
 
         <div className="flex items-center gap-3">
           <Link
+            href="/register"
+            className="hidden rounded-full border border-white/15 px-5 py-3 text-sm font-bold text-white transition hover:border-yellow-400/40 hover:text-yellow-300 sm:inline-flex"
+          >
+            Register
+          </Link>
+          <Link
             href={primaryCtaUrl}
             className="hidden rounded-full border border-yellow-400/30 bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 px-6 py-3 text-sm font-bold text-black shadow-[0_0_30px_rgba(250,204,21,0.25)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_45px_rgba(250,204,21,0.45)] lg:inline-flex"
           >
@@ -185,6 +191,14 @@ export function HeaderClient({
               </Link>
             ))}
           </nav>
+
+          <Link
+            href="/register"
+            onClick={closeMobileMenu}
+            className="mt-4 inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-white/15 px-6 text-sm font-black text-white"
+          >
+            Register member
+          </Link>
 
           <Link
             href={primaryCtaUrl}

@@ -102,6 +102,9 @@ export async function createAdminAccount(
             email: internalEmail,
             password: temporaryPassword,
             email_confirm: true,
+            app_metadata: {
+                account_type: "admin",
+            },
             user_metadata: {
                 username,
                 full_name: fullName,
