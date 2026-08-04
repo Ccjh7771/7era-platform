@@ -645,7 +645,7 @@ security definer
 set search_path = ''
 as $$
 declare
-    member_id uuid := (select auth.uid());
+    v_member_id uuid := (select auth.uid());
     malaysia_date date := (clock_timestamp() at time zone 'Asia/Kuala_Lumpur')::date;
     settings_row public.daily_reward_settings%rowtype;
     reward_row public.daily_reward_items%rowtype;
@@ -656,10 +656,10 @@ declare
     updated_balance bigint;
     generated_claim_code text;
 begin
-    if member_id is null then raise exception 'Authentication required.'; end if;
+    if v_member_id is null then raise exception 'Authentication required.'; end if;
 
     perform 1 from public.member_profiles
-    where id = member_id and status = 'active'
+    where id = v_member_id and status = 'active'
     for update;
     if not found then raise exception 'Active member not found.'; end if;
 
@@ -669,15 +669,15 @@ begin
     end if;
 
     if exists (
-        select 1 from public.daily_reward_claims
-        where member_id = claim_daily_reward.member_id and claim_date = malaysia_date
+        select 1 from public.daily_reward_claims drc
+        where drc.member_id = v_member_id and drc.claim_date = malaysia_date
     ) then
         raise exception 'Today''s reward has already been claimed.';
     end if;
 
     select count(*) into prior_claim_count
-    from public.daily_reward_claims
-    where member_id = claim_daily_reward.member_id;
+    from public.daily_reward_claims drc
+    where drc.member_id = v_member_id;
     cycle_day_number := (prior_claim_count % settings_row.cycle_length) + 1;
 
     select * into reward_row
@@ -695,11 +695,11 @@ begin
 
     if reward_row.points_amount > 0 then
         updated_balance := private.apply_member_points(
-            member_id, reward_row.points_amount, 'daily_reward',
+            v_member_id, reward_row.points_amount, 'daily_reward',
             'daily_reward_claim', claim_id, reward_row.label, null
         );
     else
-        select points_balance into updated_balance from public.member_profiles where id = member_id;
+        select points_balance into updated_balance from public.member_profiles where id = v_member_id;
     end if;
 
     if reward_row.reward_type in ('prize', 'welcome_bonus', 'custom') then
@@ -707,7 +707,7 @@ begin
         insert into public.reward_claims (
             member_id, source_type, source_id, reward_name, image_path, claim_code
         ) values (
-            member_id, 'daily_reward', claim_id, reward_row.label, reward_row.image_path, generated_claim_code
+            v_member_id, 'daily_reward', claim_id, reward_row.label, reward_row.image_path, generated_claim_code
         ) returning id into reward_claim_id;
     end if;
 
@@ -715,7 +715,7 @@ begin
         id, member_id, reward_item_id, claim_date, cycle_day,
         points_awarded, reward_claim_id
     ) values (
-        claim_id, member_id, reward_row.id, malaysia_date, cycle_day_number,
+        claim_id, v_member_id, reward_row.id, malaysia_date, cycle_day_number,
         reward_row.points_amount, reward_claim_id
     );
 
@@ -741,7 +741,7 @@ security definer
 set search_path = ''
 as $$
 declare
-    member_id uuid := (select auth.uid());
+    v_member_id uuid := (select auth.uid());
     malaysia_date date := (clock_timestamp() at time zone 'Asia/Kuala_Lumpur')::date;
     campaign public.spin_campaigns%rowtype;
     selected_prize public.spin_prizes%rowtype;
@@ -755,10 +755,10 @@ declare
     generated_claim_code text;
     updated_balance bigint;
 begin
-    if member_id is null then raise exception 'Authentication required.'; end if;
+    if v_member_id is null then raise exception 'Authentication required.'; end if;
 
     perform 1 from public.member_profiles
-    where id = member_id and status = 'active'
+    where id = v_member_id and status = 'active'
     for update;
     if not found then raise exception 'Active member not found.'; end if;
 
@@ -771,10 +771,10 @@ begin
     if campaign.id is null then raise exception 'Lucky Spin is currently unavailable.'; end if;
 
     select count(*) into spins_today
-    from public.spin_results
-    where member_id = spin_lucky_wheel.member_id
-      and campaign_id = campaign.id
-      and spin_date = malaysia_date;
+    from public.spin_results sr
+    where sr.member_id = v_member_id
+      and sr.campaign_id = campaign.id
+      and sr.spin_date = malaysia_date;
     if spins_today >= campaign.daily_limit then raise exception 'Daily spin limit reached.'; end if;
 
     perform 1 from public.spin_prizes
@@ -806,7 +806,7 @@ begin
     if selected_prize.id is null then raise exception 'Unable to select a prize.'; end if;
 
     updated_balance := private.apply_member_points(
-        member_id, -campaign.points_per_spin, 'lucky_spin',
+        v_member_id, -campaign.points_per_spin, 'lucky_spin',
         'spin_result', result_id, campaign.name, null
     );
 
@@ -821,7 +821,7 @@ begin
         insert into public.reward_claims (
             member_id, source_type, source_id, reward_name, image_path, claim_code
         ) values (
-            member_id, 'lucky_spin', result_id, selected_prize.name,
+            v_member_id, 'lucky_spin', result_id, selected_prize.name,
             selected_prize.image_path, generated_claim_code
         ) returning id into reward_claim_id;
     end if;
@@ -830,7 +830,7 @@ begin
         id, campaign_id, member_id, prize_id, spin_date,
         points_spent, is_winner, reward_claim_id
     ) values (
-        result_id, campaign.id, member_id, selected_prize.id, malaysia_date,
+        result_id, campaign.id, v_member_id, selected_prize.id, malaysia_date,
         campaign.points_per_spin, not selected_prize.is_thank_you, reward_claim_id
     );
 
