@@ -26,7 +26,6 @@ const adminNavigation: AdminNavigationItem[] = [
     {
         label: "Brands",
         href: "/admin/brands",
-        available: false,
     },
     {
         label: "Games",

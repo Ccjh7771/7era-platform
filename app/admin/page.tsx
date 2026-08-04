@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | 7ERA Platform",
@@ -14,6 +17,7 @@ const dashboardCards = [
   {
     label: "Brands",
     value: "4",
+    href: "/admin/brands",
   },
   {
     label: "Games",
@@ -28,6 +32,54 @@ const dashboardCards = [
     value: "6",
   },
 ];
+
+type DashboardCardData = {
+  label: string;
+  value: string;
+  href?: string;
+};
+
+function DashboardCard({
+  card,
+}: {
+  card: DashboardCardData;
+}) {
+  const content = (
+    <>
+      <p className="text-sm font-semibold text-zinc-500">
+        {card.label}
+      </p>
+
+      <p className="mt-4 text-4xl font-black text-yellow-300">
+        {card.value}
+      </p>
+
+      <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">
+        {card.href
+          ? "Manage content →"
+          : "Module coming soon"}
+      </p>
+    </>
+  );
+
+  if (card.href) {
+    return (
+      <Link
+        href={card.href}
+        prefetch={false}
+        className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-black p-6 transition hover:border-yellow-400/30"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-black p-6">
+      {content}
+    </div>
+  );
+}
 
 const managementLinks = [
   {
@@ -52,7 +104,16 @@ const managementLinks = [
   },
 ];
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const adminClient = createAdminClient();
+
+  const { count: brandCount } = await adminClient
+    .from("brands")
+    .select("id", {
+      count: "exact",
+      head: true,
+    });
+
   return (
     <div className="mx-auto max-w-7xl">
       <div>
@@ -73,22 +134,17 @@ export default function AdminPage() {
 
       <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         {dashboardCards.map((card) => (
-          <div
+          <DashboardCard
             key={card.label}
-            className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-black p-6"
-          >
-            <p className="text-sm font-semibold text-zinc-500">
-              {card.label}
-            </p>
-
-            <p className="mt-4 text-4xl font-black text-yellow-300">
-              {card.value}
-            </p>
-
-            <p className="mt-5 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">
-              Module coming soon
-            </p>
-          </div>
+            card={
+              card.label === "Brands"
+                ? {
+                    ...card,
+                    value: String(brandCount ?? 0),
+                  }
+                : card
+            }
+          />
         ))}
       </section>
 
