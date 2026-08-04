@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { requireAdmin } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
@@ -113,10 +114,12 @@ const managementLinks = [
     description:
       "Manage website identity, navigation, contact links and SEO.",
     href: "/admin/settings",
+    ownerOnly: true,
   },
 ];
 
 export default async function AdminPage() {
+  const admin = await requireAdmin();
   const adminClient = createAdminClient();
 
   const [
@@ -213,7 +216,9 @@ export default async function AdminPage() {
         </div>
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
-          {managementLinks.map((item) => (
+          {managementLinks
+            .filter((item) => !item.ownerOnly || admin.role === "owner")
+            .map((item) => (
             <Link
               key={item.title}
               href={item.href}
@@ -236,7 +241,7 @@ export default async function AdminPage() {
                 </span>
               </div>
             </Link>
-          ))}
+            ))}
         </div>
       </section>
 

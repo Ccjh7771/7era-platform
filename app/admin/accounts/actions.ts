@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireOwner } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 const usernamePattern =
     /^[a-z0-9][a-z0-9._-]{2,31}$/;
@@ -25,44 +25,6 @@ function isValidPassword(password: string) {
         /[0-9]/.test(password) &&
         /[^A-Za-z0-9]/.test(password)
     );
-}
-
-async function requireOwner() {
-    const supabase = await createClient();
-
-    const {
-        data: claimsData,
-        error: claimsError,
-    } = await supabase.auth.getClaims();
-
-    const currentUserId =
-        claimsData?.claims?.sub;
-
-    if (claimsError || !currentUserId) {
-        redirect("/auth/login");
-    }
-
-    const {
-        data: currentAdmin,
-        error: currentAdminError,
-    } = await supabase
-        .from("admin_profiles")
-        .select("role, is_active")
-        .eq("id", currentUserId)
-        .single();
-
-    if (
-        currentAdminError ||
-        !currentAdmin ||
-        !currentAdmin.is_active ||
-        currentAdmin.role !== "owner"
-    ) {
-        redirect(
-            "/admin?error=forbidden",
-        );
-    }
-
-    return currentUserId;
 }
 
 export async function createAdminAccount(
@@ -228,10 +190,10 @@ export async function resetAdminPassword(
         );
     }
 
-    const currentUserId =
+    const currentAdmin =
         await requireOwner();
 
-    if (targetUserId === currentUserId) {
+    if (targetUserId === currentAdmin.id) {
         redirect(
             "/admin/accounts?error=reset_not_allowed",
         );
@@ -325,10 +287,10 @@ export async function setAdminAccountStatus(
         );
     }
 
-    const currentUserId =
+    const currentAdmin =
         await requireOwner();
 
-    if (targetUserId === currentUserId) {
+    if (targetUserId === currentAdmin.id) {
         redirect(
             "/admin/accounts?error=status_not_allowed",
         );

@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation";
-
+import { requireOwner } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 import { createAdminAccount } from "./actions";
 import { ResetPasswordForm } from "./ResetPasswordForm";
@@ -75,37 +73,7 @@ export default async function AdminAccountsPage({
         params.success,
     );
 
-    const supabase = await createClient();
-
-    const {
-        data: claimsData,
-        error: claimsError,
-    } = await supabase.auth.getClaims();
-
-    const currentUserId =
-        claimsData?.claims?.sub;
-
-    if (claimsError || !currentUserId) {
-        redirect("/auth/login");
-    }
-
-    const {
-        data: currentAdmin,
-        error: currentAdminError,
-    } = await supabase
-        .from("admin_profiles")
-        .select("role, is_active")
-        .eq("id", currentUserId)
-        .single();
-
-    if (
-        currentAdminError ||
-        !currentAdmin ||
-        !currentAdmin.is_active ||
-        currentAdmin.role !== "owner"
-    ) {
-        redirect("/admin");
-    }
+    await requireOwner();
 
     const adminClient = createAdminClient();
 

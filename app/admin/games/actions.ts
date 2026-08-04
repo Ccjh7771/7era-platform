@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireContentEditor } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 type GameInput = {
     slug: string;
@@ -26,8 +26,6 @@ const logoBucket = "game-logos";
 const storageHostname =
     "imkfmynzsnjckdzctwpp.supabase.co";
 const maximumLogoSize = 2 * 1024 * 1024;
-const editableRoles = new Set(["owner", "editor"]);
-
 const logoExtensions: Record<string, string> = {
     "image/jpeg": "jpg",
     "image/png": "png",
@@ -215,30 +213,7 @@ async function removeLogo(
 }
 
 async function requireGameEditor() {
-    const supabase = await createClient();
-    const { data: claimsData, error: claimsError } =
-        await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const { data: adminProfile, error: profileError } =
-        await supabase
-            .from("admin_profiles")
-            .select("role, is_active")
-            .eq("id", userId)
-            .single();
-
-    if (
-        profileError ||
-        !adminProfile ||
-        !adminProfile.is_active ||
-        !editableRoles.has(adminProfile.role)
-    ) {
-        redirect("/admin/games?error=forbidden");
-    }
+    await requireContentEditor("/admin/games?error=forbidden");
 }
 
 function refreshGamePages() {

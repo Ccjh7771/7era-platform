@@ -5,8 +5,8 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireContentEditor } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 type PromotionInput = {
     slug: string;
@@ -31,7 +31,6 @@ const imageBucket = "promotion-images";
 const storageHostname =
     "imkfmynzsnjckdzctwpp.supabase.co";
 const maximumImageSize = 2 * 1024 * 1024;
-const editableRoles = new Set(["owner", "editor"]);
 const allowedStatuses = new Set(["active", "upcoming", "ended"]);
 
 const imageExtensions: Record<string, string> = {
@@ -234,30 +233,7 @@ async function removeImage(
 }
 
 async function requirePromotionEditor() {
-    const supabase = await createClient();
-    const { data: claimsData, error: claimsError } =
-        await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const { data: adminProfile, error: profileError } =
-        await supabase
-            .from("admin_profiles")
-            .select("role, is_active")
-            .eq("id", userId)
-            .single();
-
-    if (
-        profileError ||
-        !adminProfile ||
-        !adminProfile.is_active ||
-        !editableRoles.has(adminProfile.role)
-    ) {
-        redirect("/admin/promotions?error=forbidden");
-    }
+    await requireContentEditor("/admin/promotions?error=forbidden");
 }
 
 function refreshPromotionPages() {

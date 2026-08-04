@@ -1,8 +1,7 @@
 import Image from "next/image";
-import { redirect } from "next/navigation";
 
+import { requireAdmin } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 import {
     createBrand,
@@ -215,40 +214,8 @@ export default async function AdminBrandsPage({
     const errorCode = getParameter(params.error);
     const successCode = getParameter(params.success);
 
-    const supabase = await createClient();
-
-    const {
-        data: claimsData,
-        error: claimsError,
-    } = await supabase.auth.getClaims();
-
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const {
-        data: currentAdmin,
-        error: adminError,
-    } = await supabase
-        .from("admin_profiles")
-        .select("role, is_active")
-        .eq("id", userId)
-        .single();
-
-    if (
-        adminError ||
-        !currentAdmin ||
-        !currentAdmin.is_active
-    ) {
-        redirect("/auth/login?error=unauthorized");
-    }
-
-    const canEdit = [
-        "owner",
-        "editor",
-    ].includes(currentAdmin.role);
+    const currentAdmin = await requireAdmin();
+    const canEdit = currentAdmin.role !== "viewer";
 
     const adminClient = createAdminClient();
 

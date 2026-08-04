@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { requireOwner } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 
 import { updateWebsiteSettings } from "./actions";
 import { SiteLogoUploadField } from "./SiteLogoUploadField";
@@ -120,29 +120,7 @@ export default async function AdminSettingsPage({
     const params = await searchParams;
     const errorCode = getParameter(params.error);
     const successCode = getParameter(params.success);
-    const supabase = await createClient();
-    const { data: claimsData, error: claimsError } =
-        await supabase.auth.getClaims();
-    const userId = claimsData?.claims?.sub;
-
-    if (claimsError || !userId) {
-        redirect("/auth/login");
-    }
-
-    const { data: currentAdmin, error: adminError } = await supabase
-        .from("admin_profiles")
-        .select("role, is_active")
-        .eq("id", userId)
-        .single();
-
-    if (
-        adminError ||
-        !currentAdmin ||
-        !currentAdmin.is_active ||
-        currentAdmin.role !== "owner"
-    ) {
-        redirect("/admin?error=forbidden");
-    }
+    await requireOwner();
 
     const adminClient = createAdminClient();
     const { data, error } = await adminClient
