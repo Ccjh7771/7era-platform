@@ -11,6 +11,7 @@ type AdminNavigationItem = {
     label: string;
     href: string;
     ownerOnly?: boolean;
+    available?: boolean;
 };
 const adminNavigation: AdminNavigationItem[] = [
     {
@@ -25,27 +26,33 @@ const adminNavigation: AdminNavigationItem[] = [
     {
         label: "Brands",
         href: "/admin/brands",
+        available: false,
     },
     {
         label: "Games",
         href: "/admin/games",
+        available: false,
     },
     {
         label: "Downloads",
         href: "/admin/downloads",
+        available: false,
     },
     {
         label: "Promotions",
         href: "/admin/promotions",
+        available: false,
     },
     {
         label: "FAQ",
         href: "/admin/faq",
+        available: false,
     },
     {
         label: "Settings",
         href: "/admin/settings",
         ownerOnly: true,
+        available: false,
     },
 ];
 
@@ -126,15 +133,29 @@ export default async function AdminLayout({
                                 !item.ownerOnly ||
                                 adminProfile.role === "owner",
                         )
-                        .map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className="rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:bg-yellow-400/10 hover:text-yellow-300"
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
+                        .map((item) =>
+                            item.available !== false ? (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    prefetch={false}
+                                    className="rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:bg-yellow-400/10 hover:text-yellow-300"
+                                >
+                                    {item.label}
+                                </Link>
+                            ) : (
+                                <div
+                                    key={item.href}
+                                    className="flex cursor-not-allowed items-center justify-between rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-600"
+                                    aria-disabled="true"
+                                >
+                                    <span>{item.label}</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-700">
+                                        Coming soon
+                                    </span>
+                                </div>
+                            ),
+                        )}
                 </nav>
 
                 <div className="absolute bottom-6 left-6 right-6 space-y-3">
