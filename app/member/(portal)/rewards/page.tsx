@@ -2,7 +2,10 @@ import { requireMember } from "@/lib/member/access";
 import { formatMalaysiaDateTime } from "@/lib/member/time";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function MemberRewardsPage() {
+import { claimRewardViaLiveChat } from "./actions";
+
+export default async function MemberRewardsPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const params = await searchParams;
   const member = await requireMember();
   const supabase = await createClient();
   const [rewardsResult, transactionsResult] = await Promise.all([
@@ -17,12 +20,13 @@ export default async function MemberRewardsPage() {
     <section>
       <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">Member history</p>
       <h1 className="mt-3 text-3xl font-black">My Rewards</h1>
+      {params.error && <p role="alert" className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">Unable to start the prize claim chat. Please try again or contact support.</p>}
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
           <h2 className="text-xl font-black">Prize claims</h2>
           <div className="mt-5 space-y-3">
             {rewards.length === 0 && <p className="rounded-2xl border border-white/10 p-6 text-center text-sm text-zinc-500">No prize claims yet.</p>}
-            {rewards.map((reward) => <article key={reward.id} className="rounded-2xl border border-white/10 bg-black/30 p-4"><div className="flex justify-between gap-3"><strong>{reward.reward_name}</strong><span className="text-xs font-black uppercase text-yellow-300">{reward.status}</span></div><p className="mt-2 font-mono text-sm text-emerald-300">{reward.claim_code}</p><p className="mt-2 text-xs text-zinc-600">{formatMalaysiaDateTime(reward.created_at)}</p></article>)}
+            {rewards.map((reward) => <article key={reward.id} className="rounded-2xl border border-white/10 bg-black/30 p-4"><div className="flex justify-between gap-3"><strong>{reward.reward_name}</strong><span className="text-xs font-black uppercase text-yellow-300">{reward.status}</span></div><p className="mt-2 font-mono text-sm text-emerald-300">{reward.claim_code}</p><p className="mt-2 text-xs text-zinc-600">{formatMalaysiaDateTime(reward.created_at)}</p>{reward.status === "pending" && <form action={claimRewardViaLiveChat} className="mt-4"><input type="hidden" name="claimId" value={reward.id} /><button className="w-full rounded-xl bg-yellow-400 px-4 py-3 text-sm font-black text-black">Claim via Live Chat</button></form>}{reward.status === "fulfilled" && <p className="mt-4 text-sm font-bold text-emerald-300">Claim completed</p>}</article>)}
           </div>
         </div>
         <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
