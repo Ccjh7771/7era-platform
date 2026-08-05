@@ -9,7 +9,10 @@ export async function markMemberConversationRead(conversationId: string) {
   const member = await requireMember();
   await createAdminClient()
     .from("chat_conversations")
-    .update({ member_last_read_at: new Date().toISOString() })
+    .update({
+      member_last_read_at: new Date().toISOString(),
+      member_unread_count: 0,
+    })
     .eq("id", conversationId)
     .eq("member_id", member.id);
 }
