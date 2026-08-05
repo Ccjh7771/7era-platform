@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 
 import { MemberChat } from "./MemberChat";
 
-export default async function MemberChatPage() {
+export default async function MemberChatPage({ searchParams }: { searchParams: Promise<{ conversation?: string }> }) {
+  const params = await searchParams;
   const member = await requireMember();
   const supabase = await createClient();
   const { data: conversations } = await supabase.from("chat_conversations").select("id, subject, status, last_message_at, member_last_read_at").eq("member_id", member.id).order("last_message_at", { ascending: false });
@@ -17,7 +18,7 @@ export default async function MemberChatPage() {
       <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">Direct support</p>
       <h1 className="mt-3 text-3xl font-black">7ERA Live Chat</h1>
       <p className="mb-8 mt-2 text-sm text-zinc-500">Messages are handled by our own support team inside 7ERA.</p>
-      <MemberChat memberId={member.id} initialConversations={(conversations ?? []) as never[]} initialMessages={(messagesResult.data ?? []) as never[]} />
+      <MemberChat memberId={member.id} initialConversations={(conversations ?? []) as never[]} initialMessages={(messagesResult.data ?? []) as never[]} initialSelectedId={params.conversation} />
     </section>
   );
 }

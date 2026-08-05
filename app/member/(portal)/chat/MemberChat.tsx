@@ -24,10 +24,10 @@ type Message = {
   created_at: string;
 };
 
-export function MemberChat({ memberId, initialConversations, initialMessages }: { memberId: string; initialConversations: Conversation[]; initialMessages: Message[] }) {
+export function MemberChat({ memberId, initialConversations, initialMessages, initialSelectedId }: { memberId: string; initialConversations: Conversation[]; initialMessages: Message[]; initialSelectedId?: string }) {
   const [conversations, setConversations] = useState(initialConversations);
   const [messages, setMessages] = useState(initialMessages);
-  const [selectedId, setSelectedId] = useState(initialConversations[0]?.id ?? "");
+  const [selectedId, setSelectedId] = useState(initialConversations.some((conversation) => conversation.id === initialSelectedId) ? initialSelectedId ?? "" : initialConversations[0]?.id ?? "");
   const [body, setBody] = useState("");
   const [newSubject, setNewSubject] = useState("");
   const [newMessage, setNewMessage] = useState("");
