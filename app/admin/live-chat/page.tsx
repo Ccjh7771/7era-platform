@@ -23,7 +23,7 @@ export default async function AdminLiveChatPage() {
     <section>
       <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">Owned support channel</p>
       <h1 className="mt-3 text-3xl font-black">Live Chat Workspace</h1>
-      <p className="mb-8 mt-2 text-sm text-zinc-500">Multiple staff can reply at the same time. Assignment and internal notes keep teamwork organized.</p>
+      <p className="mb-5 mt-2 text-sm text-zinc-500 sm:mb-8">Multiple staff can reply at the same time. Assignment and internal notes keep teamwork organized.</p>
       <AdminLiveChat adminId={admin.id} canReply={admin.role !== "viewer"} initialConversations={conversations as never[]} initialMessages={(messagesResult.data ?? []) as never[]} staff={staff} />
     </section>
   );
