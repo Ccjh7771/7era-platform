@@ -84,3 +84,28 @@ export async function setSpinPrizeStatus(formData: FormData) {
   if (error) redirect("/admin/lucky-spin?error=server");
   refreshSpinPages(); redirect("/admin/lucky-spin?success=prize_status");
 }
+
+export async function updateSpinClaimStatus(formData: FormData) {
+  const admin = await requireContentEditor("/admin/lucky-spin?error=forbidden");
+  const claimId = String(formData.get("claimId") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(claimId) || !["pending", "fulfilled", "cancelled"].includes(status)) redirect("/admin/lucky-spin?error=invalid");
+
+  const { data, error } = await createAdminClient()
+    .from("reward_claims")
+    .update({
+      status,
+      fulfilled_by: status === "fulfilled" ? admin.id : null,
+      fulfilled_at: status === "fulfilled" ? new Date().toISOString() : null,
+    })
+    .eq("id", claimId)
+    .eq("source_type", "lucky_spin")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data) redirect("/admin/lucky-spin?error=claim_update");
+  revalidatePath("/admin/lucky-spin");
+  revalidatePath("/admin/daily-rewards");
+  revalidatePath("/member/rewards");
+  redirect("/admin/lucky-spin?success=claim_status");
+}

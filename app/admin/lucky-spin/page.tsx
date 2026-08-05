@@ -1,10 +1,10 @@
 import { ImageUploadField } from "@/app/admin/_components/ImageUploadField";
 import { requireAdmin } from "@/lib/admin/access";
 import { displayMalaysianPhone } from "@/lib/member/phone";
-import { formatMalaysiaDateTime } from "@/lib/member/time";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { saveSpinPrize, setSpinPrizeStatus, updateSpinCampaign, uploadSpinLogo } from "./actions";
+import { SpinResultsTable, type SpinResultRecord } from "./SpinResultsTable";
 
 function malaysiaLocalInput(value: string | null) {
   if (!value) return "";
@@ -20,11 +20,27 @@ export default async function AdminLuckySpinPage({ searchParams }: { searchParam
   const { data: campaign } = await client.from("spin_campaigns").select("*").order("created_at").limit(1).single();
   const [prizesResult, resultsResult] = await Promise.all([
     campaign ? client.from("spin_prizes").select("*").eq("campaign_id", campaign.id).order("position") : Promise.resolve({ data: [] }),
-    client.from("spin_results").select("id, is_winner, points_spent, created_at, member_profiles(full_name, phone), spin_prizes(name), reward_claims(claim_code, status)").order("created_at", { ascending: false }).limit(100),
+    client.from("spin_results").select("id, member_id, is_winner, points_spent, created_at, member_profiles(full_name, phone), spin_prizes(name), reward_claims(id, claim_code, status)").order("created_at", { ascending: false }).limit(500),
   ]);
   const prizes = prizesResult.data ?? [];
   const totalWeight = prizes.filter((prize) => prize.is_active).reduce((sum, prize) => sum + Number(prize.weight), 0);
   const editable = admin.role !== "viewer";
+  const spinResults = (resultsResult.data ?? []).map((result) => {
+    const member = Array.isArray(result.member_profiles) ? result.member_profiles[0] : result.member_profiles;
+    const prize = Array.isArray(result.spin_prizes) ? result.spin_prizes[0] : result.spin_prizes;
+    const claim = Array.isArray(result.reward_claims) ? result.reward_claims[0] : result.reward_claims;
+    return {
+      id: result.id,
+      memberId: result.member_id,
+      memberName: member?.full_name ?? "Member",
+      memberPhone: member?.phone ? displayMalaysianPhone(member.phone) : "",
+      prizeName: prize?.name ?? "Unknown result",
+      isWinner: result.is_winner,
+      pointsSpent: result.points_spent,
+      createdAt: result.created_at,
+      claim: claim ? { id: claim.id, code: claim.claim_code, status: claim.status } : null,
+    } satisfies SpinResultRecord;
+  });
 
   if (!campaign) return <p>Lucky Spin campaign could not be loaded.</p>;
 
@@ -56,7 +72,7 @@ export default async function AdminLuckySpinPage({ searchParams }: { searchParam
 
       {editable && prizes.filter((item) => !item.is_thank_you).length < 12 && <form action={saveSpinPrize} className="mt-6 grid gap-4 rounded-[24px] border border-dashed border-yellow-400/25 bg-yellow-400/[0.04] p-5 lg:grid-cols-4"><input type="hidden" name="campaignId" value={campaign.id} /><div><label className="text-xs text-zinc-500">New segment name</label><input name="name" required placeholder="RM10 Reward" className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/40 px-3" /></div><div><label className="text-xs text-zinc-500">Weight</label><input name="weight" type="number" step="0.0001" min="0.0001" defaultValue="10" required className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/40 px-3" /></div><div><label className="text-xs text-zinc-500">Inventory (blank = unlimited)</label><input name="inventory" type="number" min={0} placeholder="Unlimited" className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/40 px-3" /></div><div><label className="text-xs text-zinc-500">Position</label><input name="position" type="number" min={0} max={99} defaultValue={prizes.length} className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/40 px-3" /></div><label className="text-sm"><input name="isThankYou" type="checkbox" className="mr-2" />Thank You segment</label><label className="text-sm"><input name="isActive" type="checkbox" defaultChecked className="mr-2" />Active</label><div className="lg:col-span-2"><ImageUploadField id="new-prize" label="Prize image" /></div><button className="h-11 rounded-xl bg-yellow-400 font-black text-black lg:col-start-4">Add segment</button></form>}
 
-      <div className="mt-12 rounded-[28px] border border-white/10 bg-white/[0.04] p-6"><h2 className="text-xl font-black">Recent spins</h2><div className="mt-5 overflow-x-auto"><table className="w-full min-w-[720px] text-left text-sm"><thead className="text-xs uppercase text-zinc-600"><tr><th className="pb-3">Member</th><th>Result</th><th>Points</th><th>Claim</th><th>Time</th></tr></thead><tbody className="divide-y divide-white/10">{(resultsResult.data ?? []).map((result) => { const member = Array.isArray(result.member_profiles) ? result.member_profiles[0] : result.member_profiles; const prize = Array.isArray(result.spin_prizes) ? result.spin_prizes[0] : result.spin_prizes; const claim = Array.isArray(result.reward_claims) ? result.reward_claims[0] : result.reward_claims; return <tr key={result.id}><td className="py-4"><strong>{member?.full_name ?? "Member"}</strong><br/><span className="text-xs text-zinc-600">{member?.phone ? displayMalaysianPhone(member.phone) : ""}</span></td><td className={result.is_winner ? "text-emerald-300" : "text-zinc-500"}>{prize?.name}</td><td>-{result.points_spent}</td><td className="font-mono text-xs">{claim?.claim_code ?? "—"} {claim?.status ? `(${claim.status})` : ""}</td><td className="text-xs text-zinc-500">{formatMalaysiaDateTime(result.created_at)}</td></tr>; })}</tbody></table></div></div>
+      <SpinResultsTable results={spinResults} editable={editable} />
     </section>
   );
 }
