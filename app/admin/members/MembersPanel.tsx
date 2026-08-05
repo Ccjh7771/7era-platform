@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useDeferredValue, useMemo, useState } from "react";
 
 import { formatMalaysiaDateTime } from "@/lib/member/time";
@@ -104,6 +105,7 @@ function MemberCard({ member, canEditPoints, isOwner }: { member: AdminMemberRec
         <div className="text-right">
           <p className="text-2xl font-black text-yellow-300">{member.pointsBalance.toLocaleString("en-MY")} PTS</p>
           <p className={`mt-1 text-xs font-black uppercase ${member.status === "active" ? "text-emerald-300" : "text-red-300"}`}>{member.status}</p>
+          <Link href={`/admin/members/${member.id}`} prefetch={false} className="mt-3 inline-flex rounded-xl border border-yellow-400/20 px-3 py-2 text-xs font-bold text-yellow-300">View full activity</Link>
         </div>
       </div>
 
