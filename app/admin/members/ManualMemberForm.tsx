@@ -21,7 +21,12 @@ export function ManualMemberForm() {
   }, [router, state.status]);
 
   return (
-    <form ref={formRef} action={action} className="mt-8 rounded-[28px] border border-yellow-400/20 bg-yellow-400/[0.04] p-5 sm:p-6">
+    <details className="mt-6 border border-yellow-400/20 bg-yellow-400/[0.04]">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm font-black text-yellow-300 marker:content-none">
+        <span>＋ Create Member Manually</span>
+        <span className="text-[10px] font-bold uppercase text-zinc-500">Open form</span>
+      </summary>
+    <form ref={formRef} action={action} className="border-t border-yellow-400/20 p-5 sm:p-6">
       <div>
         <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-300">Manual registration</p>
         <h2 className="mt-2 text-xl font-black">Create a member</h2>
@@ -39,5 +44,6 @@ export function ManualMemberForm() {
         {state.status === "success" && state.memberId ? <Link href={`/admin/members/${state.memberId}`} prefetch={false} className="text-sm font-bold text-yellow-300">Open member profile →</Link> : null}
       </div>
     </form>
+    </details>
   );
 }
