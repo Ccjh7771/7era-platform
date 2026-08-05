@@ -18,12 +18,19 @@ export async function createManualMember(previousState: CreateMemberState, formD
   const phone = normalizeMalaysianPhone(String(formData.get("phone") ?? ""));
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
+  const bankAccount = String(formData.get("bankAccount") ?? "").trim();
+  const bankName = String(formData.get("bankName") ?? "").trim();
+  const referrerName = String(formData.get("referrerName") ?? "").trim();
+  const topReferrerName = String(formData.get("topReferrerName") ?? "").trim();
 
   if (!phone || fullName.length < 2 || fullName.length > 100) {
     return { status: "error", message: "Enter a full name and a valid Malaysian mobile number." };
   }
   if (!isValidMemberPassword(password) || password !== confirmPassword) {
     return { status: "error", message: "Enter the same password twice using at least 6 characters." };
+  }
+  if (bankAccount.length > 50 || bankName.length > 80 || referrerName.length > 100 || topReferrerName.length > 100) {
+    return { status: "error", message: "One of the optional profile fields is too long." };
   }
 
   const client = createAdminClient();
@@ -52,6 +59,10 @@ export async function createManualMember(previousState: CreateMemberState, formD
     full_name: fullName,
     status: "active",
     must_change_password: false,
+    bank_account: bankAccount || null,
+    bank_name: bankName || null,
+    referrer_name: referrerName || null,
+    top_referrer_name: topReferrerName || null,
   }, { onConflict: "id" });
   if (profileError) {
     console.error("Manual member profile creation failed:", profileError.message);
@@ -92,6 +103,38 @@ export async function setMemberStatus(formData: FormData) {
   if (error) redirect("/admin/members?error=server");
   revalidatePath("/admin/members");
   redirect("/admin/members?success=status");
+}
+
+export async function updateMemberBusinessProfile(formData: FormData) {
+  const memberId = String(formData.get("memberId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(memberId)) redirect("/admin/members?error=invalid");
+  await requireContentEditor("/admin/members?error=forbidden");
+
+  const cleanOptional = (field: string, maximum: number) => {
+    const value = String(formData.get(field) ?? "").trim();
+    if (value.length > maximum) redirect("/admin/members?error=invalid_profile");
+    return value || null;
+  };
+  const bankAccount = cleanOptional("bankAccount", 50);
+  const bankName = cleanOptional("bankName", 80);
+  const referrerName = cleanOptional("referrerName", 100);
+  const topReferrerName = cleanOptional("topReferrerName", 100);
+
+  const client = createAdminClient();
+  const { error } = await client.from("member_profiles").update({
+    bank_account: bankAccount,
+    bank_name: bankName,
+    referrer_name: referrerName,
+    top_referrer_name: topReferrerName,
+    updated_at: new Date().toISOString(),
+  }).eq("id", memberId);
+  if (error) {
+    console.error("Member business profile update failed:", error.message);
+    redirect("/admin/members?error=profile_failed");
+  }
+  revalidatePath("/admin/members");
+  revalidatePath(`/admin/members/${memberId}`);
+  redirect("/admin/members?success=profile");
 }
 
 export async function adjustMemberPoints(formData: FormData) {

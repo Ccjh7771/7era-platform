@@ -5,7 +5,7 @@ import { Fragment, useDeferredValue, useMemo, useState } from "react";
 
 import { formatMalaysiaDateTime } from "@/lib/member/time";
 
-import { adjustMemberPoints, setMemberStatus } from "./actions";
+import { adjustMemberPoints, setMemberStatus, updateMemberBusinessProfile } from "./actions";
 import { ResetMemberPassword } from "./ResetMemberPassword";
 
 type MemberFilter = "all" | "active" | "suspended" | "never_logged_in";
@@ -17,6 +17,10 @@ export type AdminMemberRecord = {
   status: "active" | "suspended";
   mustChangePassword: boolean;
   pointsBalance: number;
+  bankAccount: string;
+  bankName: string;
+  referrerName: string;
+  topReferrerName: string;
   lastLoginAt: string | null;
   createdAt: string;
 };
@@ -42,7 +46,7 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
   const filteredMembers = useMemo(() => members.filter((member) => {
-    const matchesSearch = deferredSearch.length === 0 || [member.fullName, member.phone].some((value) => value.toLowerCase().includes(deferredSearch));
+    const matchesSearch = deferredSearch.length === 0 || [member.fullName, member.phone, member.bankAccount, member.bankName, member.referrerName, member.topReferrerName].some((value) => value.toLowerCase().includes(deferredSearch));
     if (!matchesSearch) return false;
     if (filter === "never_logged_in") return member.lastLoginAt === null;
     if (filter === "active" || filter === "suspended") return member.status === filter;
@@ -73,12 +77,16 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
       </div>
 
       <div className="overflow-x-auto border-x border-b border-zinc-600 bg-white">
-        <table className="w-full min-w-[1080px] table-fixed border-collapse text-[11px] text-black">
+        <table className="w-full min-w-[1720px] table-fixed border-collapse text-[11px] text-black">
           <thead className="bg-zinc-600 text-left text-[10px] font-bold uppercase text-white">
             <tr>
               <TableHeading className="w-[150px]">Register Date ▼</TableHeading>
               <TableHeading className="w-[190px]">Name</TableHeading>
               <TableHeading className="w-[135px]">Mobile</TableHeading>
+              <TableHeading className="w-[150px]">Bank Account</TableHeading>
+              <TableHeading className="w-[110px]">Bank</TableHeading>
+              <TableHeading className="w-[150px]">Referrer</TableHeading>
+              <TableHeading className="w-[150px]">Top Referrer</TableHeading>
               <TableHeading className="w-[95px]">Status</TableHeading>
               <TableHeading className="w-[100px] text-right">Points</TableHeading>
               <TableHeading className="w-[160px]">Last Login</TableHeading>
@@ -93,6 +101,10 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
                   <TableCell className="whitespace-nowrap">{formatMalaysiaDateTime(member.createdAt)}</TableCell>
                   <TableCell className="truncate font-bold uppercase" title={member.fullName}>{member.fullName}</TableCell>
                   <TableCell className="whitespace-nowrap font-mono">{member.phone}</TableCell>
+                  <TableCell className="truncate font-mono" title={member.bankAccount}>{member.bankAccount || "-"}</TableCell>
+                  <TableCell className="truncate uppercase" title={member.bankName}>{member.bankName || "-"}</TableCell>
+                  <TableCell className="truncate uppercase" title={member.referrerName}>{member.referrerName || "-"}</TableCell>
+                  <TableCell className="truncate uppercase" title={member.topReferrerName}>{member.topReferrerName || "-"}</TableCell>
                   <TableCell><span className={`font-bold uppercase ${member.status === "active" ? "text-emerald-700" : "text-red-600"}`}>{member.status}</span></TableCell>
                   <TableCell className="text-right font-mono font-bold text-blue-700">{member.pointsBalance.toLocaleString("en-MY")}</TableCell>
                   <TableCell className="whitespace-nowrap">{member.lastLoginAt ? formatMalaysiaDateTime(member.lastLoginAt) : <span className="text-zinc-500">Never</span>}</TableCell>
@@ -107,7 +119,7 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
                 </tr>
                 {openMemberId === member.id && (
                   <tr className="bg-zinc-950 text-white">
-                    <td colSpan={8} className="border border-zinc-600 p-4">
+                    <td colSpan={12} className="border border-zinc-600 p-4">
                       <MemberControls member={member} canEditPoints={canEditPoints} isOwner={isOwner} />
                     </td>
                   </tr>
@@ -138,7 +150,18 @@ function TableCell({ children, className = "", title }: { children: React.ReactN
 
 function MemberControls({ member, canEditPoints, isOwner }: { member: AdminMemberRecord; canEditPoints: boolean; isOwner: boolean }) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
+    <div className="space-y-4">
+      {canEditPoints ? (
+        <form action={updateMemberBusinessProfile} className="grid gap-2 border border-zinc-700 bg-black p-3 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+          <input type="hidden" name="memberId" value={member.id} />
+          <label><span className="mb-1 block text-[10px] font-bold uppercase text-zinc-500">Bank Account</span><input name="bankAccount" defaultValue={member.bankAccount} maxLength={50} autoComplete="off" className="h-10 w-full border border-zinc-700 bg-zinc-950 px-3 text-xs outline-none focus:border-yellow-400" /></label>
+          <label><span className="mb-1 block text-[10px] font-bold uppercase text-zinc-500">Bank</span><input name="bankName" defaultValue={member.bankName} maxLength={80} autoComplete="off" className="h-10 w-full border border-zinc-700 bg-zinc-950 px-3 text-xs outline-none focus:border-yellow-400" /></label>
+          <label><span className="mb-1 block text-[10px] font-bold uppercase text-zinc-500">Referrer</span><input name="referrerName" defaultValue={member.referrerName} maxLength={100} autoComplete="off" className="h-10 w-full border border-zinc-700 bg-zinc-950 px-3 text-xs outline-none focus:border-yellow-400" /></label>
+          <label><span className="mb-1 block text-[10px] font-bold uppercase text-zinc-500">Top Referrer</span><input name="topReferrerName" defaultValue={member.topReferrerName} maxLength={100} autoComplete="off" className="h-10 w-full border border-zinc-700 bg-zinc-950 px-3 text-xs outline-none focus:border-yellow-400" /></label>
+          <button className="h-10 self-end bg-yellow-400 px-4 text-xs font-black text-black">Save profile</button>
+        </form>
+      ) : null}
+      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
       {canEditPoints ? (
         <form action={adjustMemberPoints} className="grid content-start gap-2 sm:grid-cols-[120px_1fr_auto]">
           <input type="hidden" name="memberId" value={member.id} />
@@ -156,6 +179,7 @@ function MemberControls({ member, canEditPoints, isOwner }: { member: AdminMembe
           <button className={`mt-2 text-xs font-bold ${member.status === "active" ? "text-red-300" : "text-emerald-300"}`}>{member.status === "active" ? "Suspend member" : "Reactivate member"}</button>
         </form>
       ) : null}
+      </div>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default async function AdminMemberDetailPage({ params }: MemberDetailPage
 
   const client = createAdminClient();
   const [profileResult, pointsResult, dailyResult, spinsResult, winsResult, rewardsResult, pendingRewardsResult, chatsResult] = await Promise.all([
-    client.from("member_profiles").select("id, full_name, phone, status, must_change_password, points_balance, avatar_path, last_login_at, created_at").eq("id", memberId).maybeSingle(),
+    client.from("member_profiles").select("id, full_name, phone, status, must_change_password, points_balance, avatar_path, bank_account, bank_name, referrer_name, top_referrer_name, last_login_at, created_at").eq("id", memberId).maybeSingle(),
     client.from("point_transactions").select("id, amount, balance_after, transaction_type, note, created_at", { count: "exact" }).eq("member_id", memberId).order("created_at", { ascending: false }).limit(50),
     client.from("daily_reward_claims").select("id, cycle_day, points_awarded, created_at, daily_reward_items(label, reward_type)", { count: "exact" }).eq("member_id", memberId).order("created_at", { ascending: false }).limit(30),
     client.from("spin_results").select("id, is_winner, points_spent, created_at, spin_prizes(name), reward_claims(claim_code, status)", { count: "exact" }).eq("member_id", memberId).order("created_at", { ascending: false }).limit(30),
@@ -60,6 +60,13 @@ export default async function AdminMemberDetailPage({ params }: MemberDetailPage
         <ProfileField label="Registered" value={formatMalaysiaDateTime(profile.created_at)} />
         <ProfileField label="Last login" value={profile.last_login_at ? formatMalaysiaDateTime(profile.last_login_at) : "Never"} />
         <ProfileField label="Password status" value={profile.must_change_password ? "Update required" : "Ready"} />
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <ProfileField label="Bank Account" value={profile.bank_account || "Not set"} mono />
+        <ProfileField label="Bank" value={profile.bank_name || "Not set"} />
+        <ProfileField label="Referrer" value={profile.referrer_name || "Not set"} />
+        <ProfileField label="Top Referrer" value={profile.top_referrer_name || "Not set"} />
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

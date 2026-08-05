@@ -14,7 +14,7 @@ export default async function AdminMembersPage({ searchParams }: MembersPageProp
   const error = Array.isArray(params.error) ? params.error[0] : params.error;
   const client = createAdminClient();
   const [membersResult, activeResult, suspendedResult, neverLoggedInResult] = await Promise.all([
-    client.from("member_profiles").select("id, full_name, phone, status, must_change_password, points_balance, last_login_at, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
+    client.from("member_profiles").select("id, full_name, phone, status, must_change_password, points_balance, bank_account, bank_name, referrer_name, top_referrer_name, last_login_at, created_at", { count: "exact" }).order("created_at", { ascending: false }).limit(500),
     client.from("member_profiles").select("id", { count: "exact", head: true }).eq("status", "active"),
     client.from("member_profiles").select("id", { count: "exact", head: true }).eq("status", "suspended"),
     client.from("member_profiles").select("id", { count: "exact", head: true }).is("last_login_at", null),
@@ -26,6 +26,10 @@ export default async function AdminMembersPage({ searchParams }: MembersPageProp
     status: member.status,
     mustChangePassword: member.must_change_password,
     pointsBalance: Number(member.points_balance),
+    bankAccount: member.bank_account ?? "",
+    bankName: member.bank_name ?? "",
+    referrerName: member.referrer_name ?? "",
+    topReferrerName: member.top_referrer_name ?? "",
     lastLoginAt: member.last_login_at,
     createdAt: member.created_at,
   } satisfies AdminMemberRecord));
