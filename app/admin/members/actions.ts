@@ -5,8 +5,64 @@ import { redirect } from "next/navigation";
 
 import { requireContentEditor, requireOwner } from "@/lib/admin/access";
 import { isValidMemberPassword } from "@/lib/member/password";
+import { displayMalaysianPhone, memberEmailForPhone, normalizeMalaysianPhone } from "@/lib/member/phone";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+
+export type CreateMemberState = { status: "idle" | "success" | "error"; message: string; memberId?: string };
+
+export async function createManualMember(previousState: CreateMemberState, formData: FormData): Promise<CreateMemberState> {
+  void previousState;
+  await requireContentEditor("/admin/members?error=forbidden");
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const phone = normalizeMalaysianPhone(String(formData.get("phone") ?? ""));
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!phone || fullName.length < 2 || fullName.length > 100) {
+    return { status: "error", message: "Enter a full name and a valid Malaysian mobile number." };
+  }
+  if (!isValidMemberPassword(password) || password !== confirmPassword) {
+    return { status: "error", message: "Enter the same password twice using at least 6 characters." };
+  }
+
+  const client = createAdminClient();
+  const { data: existingMember, error: lookupError } = await client.from("member_profiles").select("id").eq("phone", phone).maybeSingle();
+  if (lookupError) {
+    console.error("Manual member lookup failed:", lookupError.message);
+    return { status: "error", message: "Unable to check this mobile number. Please try again." };
+  }
+  if (existingMember) return { status: "error", message: "This mobile number is already registered." };
+
+  const { data: createdData, error: createError } = await client.auth.admin.createUser({
+    email: memberEmailForPhone(phone),
+    password,
+    email_confirm: true,
+    app_metadata: { account_type: "member" },
+    user_metadata: { full_name: fullName, phone },
+  });
+  if (createError || !createdData.user) {
+    console.error("Manual member creation failed:", createError?.message);
+    return { status: "error", message: createError?.message.toLowerCase().includes("registered") ? "This mobile number is already registered." : "Unable to create the member account." };
+  }
+
+  const { error: profileError } = await client.from("member_profiles").upsert({
+    id: createdData.user.id,
+    phone,
+    full_name: fullName,
+    status: "active",
+    must_change_password: false,
+  }, { onConflict: "id" });
+  if (profileError) {
+    console.error("Manual member profile creation failed:", profileError.message);
+    await client.auth.admin.deleteUser(createdData.user.id);
+    return { status: "error", message: "Unable to create the member profile." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/members");
+  return { status: "success", message: `Member ${displayMalaysianPhone(phone)} created. They can sign in immediately.`, memberId: createdData.user.id };
+}
 
 export type ResetMemberState = { status: "idle" | "success" | "error"; message: string };
 export async function resetMemberPassword(previousState: ResetMemberState, formData: FormData): Promise<ResetMemberState> {

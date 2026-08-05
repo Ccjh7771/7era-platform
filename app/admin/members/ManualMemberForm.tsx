@@ -1,0 +1,43 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef } from "react";
+
+import { createManualMember, type CreateMemberState } from "./actions";
+
+const initialState: CreateMemberState = { status: "idle", message: "" };
+
+export function ManualMemberForm() {
+  const [state, action, pending] = useActionState(createManualMember, initialState);
+  const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.status === "success") {
+      formRef.current?.reset();
+      router.refresh();
+    }
+  }, [router, state.status]);
+
+  return (
+    <form ref={formRef} action={action} className="mt-8 rounded-[28px] border border-yellow-400/20 bg-yellow-400/[0.04] p-5 sm:p-6">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-yellow-300">Manual registration</p>
+        <h2 className="mt-2 text-xl font-black">Create a member</h2>
+        <p className="mt-2 text-sm text-zinc-500">Enter the customer&apos;s full name, Malaysian mobile number and a password of at least 6 characters.</p>
+      </div>
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <label><span className="text-xs font-semibold text-zinc-400">Customer full name</span><input name="fullName" required minLength={2} maxLength={100} autoComplete="name" className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-black/50 px-4 outline-none focus:border-yellow-400/50" /></label>
+        <label><span className="text-xs font-semibold text-zinc-400">Mobile number</span><input name="phone" required inputMode="tel" autoComplete="tel" placeholder="01X-XXX-XXXX" className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-black/50 px-4 outline-none focus:border-yellow-400/50" /></label>
+        <label><span className="text-xs font-semibold text-zinc-400">Password</span><input name="password" type="password" required minLength={6} maxLength={72} autoComplete="new-password" placeholder="At least 6 characters" className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-black/50 px-4 outline-none focus:border-yellow-400/50" /></label>
+        <label><span className="text-xs font-semibold text-zinc-400">Confirm password</span><input name="confirmPassword" type="password" required minLength={6} maxLength={72} autoComplete="new-password" placeholder="Enter the same password" className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-black/50 px-4 outline-none focus:border-yellow-400/50" /></label>
+      </div>
+      <div className="mt-5 flex flex-wrap items-center gap-4">
+        <button disabled={pending} className="h-12 rounded-xl bg-yellow-400 px-6 text-sm font-black text-black disabled:cursor-wait disabled:opacity-60">{pending ? "Creating member…" : "Create member"}</button>
+        {state.message ? <p role={state.status === "error" ? "alert" : "status"} className={`text-sm ${state.status === "success" ? "text-emerald-300" : "text-red-300"}`}>{state.message}</p> : null}
+        {state.status === "success" && state.memberId ? <Link href={`/admin/members/${state.memberId}`} prefetch={false} className="text-sm font-bold text-yellow-300">Open member profile →</Link> : null}
+      </div>
+    </form>
+  );
+}

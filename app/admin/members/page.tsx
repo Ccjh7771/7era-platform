@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/admin/access";
 import { displayMalaysianPhone } from "@/lib/member/phone";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { ManualMemberForm } from "./ManualMemberForm";
 import { MembersPanel, type AdminMemberRecord } from "./MembersPanel";
 
 type MembersPageProps = { searchParams: Promise<{ success?: string | string[]; error?: string | string[] }> };
@@ -42,6 +43,7 @@ export default async function AdminMembersPage({ searchParams }: MembersPageProp
       <p className="mt-2 text-sm text-zinc-500">Search member profiles, manage points, suspend access and update forgotten passwords.</p>
       {success ? <p className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">Member account updated successfully.</p> : null}
       {error || membersResult.error ? <p className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">The requested member operation could not be completed.</p> : null}
+      {admin.role !== "viewer" ? <ManualMemberForm /> : null}
       <MembersPanel members={members} summary={summary} canEditPoints={admin.role !== "viewer"} isOwner={admin.role === "owner"} />
     </section>
   );
