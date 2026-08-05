@@ -62,7 +62,7 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
         <SummaryCard label="Never Logged In" value={summary.neverLoggedIn} tone="warning" />
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 border border-white/10 bg-zinc-900 p-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mt-4 flex flex-col gap-3 rounded-t-xl border border-white/10 bg-zinc-900 p-3 lg:flex-row lg:items-center lg:justify-between">
         <label className="min-w-0 flex-1 lg:max-w-md">
           <span className="sr-only">Search members</span>
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name or mobile number" className="h-9 w-full border border-zinc-600 bg-black px-3 text-xs text-white outline-none placeholder:text-zinc-600 focus:border-yellow-400" />
@@ -76,50 +76,46 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
         </div>
       </div>
 
-      <div className="overflow-x-auto border-x border-b border-zinc-600 bg-white">
-        <table className="w-full min-w-[1720px] table-fixed border-collapse text-[11px] text-black">
-          <thead className="bg-zinc-600 text-left text-[10px] font-bold uppercase text-white">
+      <div className="overflow-x-auto rounded-b-xl border-x border-b border-white/10 bg-zinc-950">
+        <table className="w-full table-fixed border-collapse text-[11px] text-zinc-200">
+          <thead className="bg-zinc-800 text-left text-[10px] font-bold uppercase tracking-wide text-zinc-300">
             <tr>
-              <TableHeading className="w-[150px]">Register Date ▼</TableHeading>
-              <TableHeading className="w-[190px]">Name</TableHeading>
-              <TableHeading className="w-[135px]">Mobile</TableHeading>
-              <TableHeading className="w-[150px]">Bank Account</TableHeading>
-              <TableHeading className="w-[110px]">Bank</TableHeading>
-              <TableHeading className="w-[150px]">Referrer</TableHeading>
-              <TableHeading className="w-[150px]">Top Referrer</TableHeading>
-              <TableHeading className="w-[95px]">Status</TableHeading>
-              <TableHeading className="w-[100px] text-right">Points</TableHeading>
-              <TableHeading className="w-[160px]">Last Login</TableHeading>
-              <TableHeading className="w-[135px]">Password</TableHeading>
-              <TableHeading className="w-[190px]">Action</TableHeading>
+              <TableHeading className="hidden w-[125px] xl:table-cell">Register Date ▼</TableHeading>
+              <TableHeading className="w-[140px]">Name</TableHeading>
+              <TableHeading className="w-[120px]">Mobile</TableHeading>
+              <TableHeading className="hidden w-[135px] 2xl:table-cell">Bank Account</TableHeading>
+              <TableHeading className="hidden w-[90px] 2xl:table-cell">Bank</TableHeading>
+              <TableHeading className="hidden w-[130px] 2xl:table-cell">Referrer</TableHeading>
+              <TableHeading className="hidden w-[130px] 2xl:table-cell">Top Referrer</TableHeading>
+              <TableHeading className="w-[75px]">Status</TableHeading>
+              <TableHeading className="w-[70px] text-right">Points</TableHeading>
+              <TableHeading className="w-[155px]">Action</TableHeading>
             </tr>
           </thead>
           <tbody>
             {filteredMembers.map((member, index) => (
               <Fragment key={member.id}>
-                <tr className={index % 2 === 0 ? "bg-white" : "bg-zinc-100"}>
-                  <TableCell className="whitespace-nowrap">{formatMalaysiaDateTime(member.createdAt)}</TableCell>
+                <tr className={`${index % 2 === 0 ? "bg-zinc-950" : "bg-white/[0.025]"} transition hover:bg-yellow-400/[0.05]`}>
+                  <TableCell className="hidden whitespace-nowrap text-zinc-500 xl:table-cell">{formatMalaysiaDateTime(member.createdAt)}</TableCell>
                   <TableCell className="truncate font-bold uppercase" title={member.fullName}>{member.fullName}</TableCell>
-                  <TableCell className="whitespace-nowrap font-mono">{member.phone}</TableCell>
-                  <TableCell className="truncate font-mono" title={member.bankAccount}>{member.bankAccount || "-"}</TableCell>
-                  <TableCell className="truncate uppercase" title={member.bankName}>{member.bankName || "-"}</TableCell>
-                  <TableCell className="truncate uppercase" title={member.referrerName}>{member.referrerName || "-"}</TableCell>
-                  <TableCell className="truncate uppercase" title={member.topReferrerName}>{member.topReferrerName || "-"}</TableCell>
-                  <TableCell><span className={`font-bold uppercase ${member.status === "active" ? "text-emerald-700" : "text-red-600"}`}>{member.status}</span></TableCell>
-                  <TableCell className="text-right font-mono font-bold text-blue-700">{member.pointsBalance.toLocaleString("en-MY")}</TableCell>
-                  <TableCell className="whitespace-nowrap">{member.lastLoginAt ? formatMalaysiaDateTime(member.lastLoginAt) : <span className="text-zinc-500">Never</span>}</TableCell>
-                  <TableCell>{member.mustChangePassword ? <span className="font-bold text-amber-700">Update required</span> : <span className="text-emerald-700">Normal</span>}</TableCell>
+                  <TableCell className="whitespace-nowrap font-mono text-zinc-300">{member.phone}</TableCell>
+                  <TableCell className="hidden truncate font-mono 2xl:table-cell" title={member.bankAccount}>{member.bankAccount || "-"}</TableCell>
+                  <TableCell className="hidden truncate uppercase 2xl:table-cell" title={member.bankName}>{member.bankName || "-"}</TableCell>
+                  <TableCell className="hidden truncate uppercase 2xl:table-cell" title={member.referrerName}>{member.referrerName || "-"}</TableCell>
+                  <TableCell className="hidden truncate uppercase 2xl:table-cell" title={member.topReferrerName}>{member.topReferrerName || "-"}</TableCell>
+                  <TableCell><span className={`font-bold uppercase ${member.status === "active" ? "text-emerald-300" : "text-red-300"}`}>{member.status}</span></TableCell>
+                  <TableCell className="text-right font-mono font-bold text-yellow-300">{member.pointsBalance.toLocaleString("en-MY")}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Link href="/admin/live-chat" prefetch={false} className="border border-zinc-400 bg-zinc-100 px-2 py-1 text-[9px] font-bold hover:bg-zinc-200">CHAT</Link>
-                      <Link href={`/admin/members/${member.id}`} prefetch={false} className="border border-zinc-400 bg-zinc-100 px-2 py-1 text-[9px] font-bold hover:bg-zinc-200">PROFILE</Link>
-                      {(canEditPoints || isOwner) && <button type="button" onClick={() => setOpenMemberId((current) => current === member.id ? null : member.id)} aria-expanded={openMemberId === member.id} className="border border-zinc-400 bg-zinc-100 px-2 py-1 text-[9px] font-bold hover:bg-zinc-200">MANAGE</button>}
+                      <Link href="/admin/live-chat" prefetch={false} className="rounded border border-white/15 bg-white/[0.05] px-2 py-1 text-[9px] font-bold text-zinc-300 hover:border-yellow-400/40 hover:text-yellow-300">CHAT</Link>
+                      <Link href={`/admin/members/${member.id}`} prefetch={false} className="rounded border border-white/15 bg-white/[0.05] px-2 py-1 text-[9px] font-bold text-zinc-300 hover:border-yellow-400/40 hover:text-yellow-300">PROFILE</Link>
+                      {(canEditPoints || isOwner) && <button type="button" onClick={() => setOpenMemberId((current) => current === member.id ? null : member.id)} aria-expanded={openMemberId === member.id} className="rounded border border-yellow-400/30 bg-yellow-400/10 px-2 py-1 text-[9px] font-bold text-yellow-300 hover:bg-yellow-400/20">MANAGE</button>}
                     </div>
                   </TableCell>
                 </tr>
                 {openMemberId === member.id && (
                   <tr className="bg-zinc-950 text-white">
-                    <td colSpan={12} className="border border-zinc-600 p-4">
+                    <td colSpan={10} className="border border-white/10 p-4">
                       <MemberControls member={member} canEditPoints={canEditPoints} isOwner={isOwner} />
                     </td>
                   </tr>
@@ -141,11 +137,11 @@ function SummaryCard({ label, value, tone = "default" }: { label: string; value:
 }
 
 function TableHeading({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th scope="col" className={`border border-zinc-400 px-2 py-2 ${className}`}>{children}</th>;
+  return <th scope="col" className={`border-b border-r border-white/10 px-3 py-3 last:border-r-0 ${className}`}>{children}</th>;
 }
 
 function TableCell({ children, className = "", title }: { children: React.ReactNode; className?: string; title?: string }) {
-  return <td className={`h-9 border border-zinc-400 px-2 py-1 ${className}`} title={title}>{children}</td>;
+  return <td className={`h-11 border-b border-r border-white/[0.07] px-3 py-2 last:border-r-0 ${className}`} title={title}>{children}</td>;
 }
 
 function MemberControls({ member, canEditPoints, isOwner }: { member: AdminMemberRecord; canEditPoints: boolean; isOwner: boolean }) {

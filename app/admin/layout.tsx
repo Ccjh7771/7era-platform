@@ -89,7 +89,7 @@ export default async function AdminLayout({
             initialMemberMessages={memberMessagesResult.data ?? []}
         >
         <div className="min-h-screen bg-zinc-950 text-white">
-            <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-black/80 p-6 backdrop-blur-2xl lg:block">
+            <aside className="fixed inset-y-0 left-0 hidden w-60 border-r border-white/10 bg-black/80 p-5 backdrop-blur-2xl lg:block">
                 <Link
                     href="/admin"
                     className="flex items-center gap-3"
@@ -120,7 +120,7 @@ export default async function AdminLayout({
                                     key={item.href}
                                     href={item.href}
                                     prefetch={false}
-                                    className="flex items-center justify-between gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:bg-yellow-400/10 hover:text-yellow-300"
+                                    className="flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2.5 text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:bg-yellow-400/10 hover:text-yellow-300"
                                 >
                                     <span>{item.label}</span>
                                     {item.href === "/admin/live-chat" && <AdminLiveChatBadge />}
@@ -128,7 +128,7 @@ export default async function AdminLayout({
                             ) : (
                                 <div
                                     key={item.href}
-                                    className="flex cursor-not-allowed items-center justify-between rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-600"
+                                    className="flex cursor-not-allowed items-center justify-between rounded-xl border border-transparent px-3 py-2.5 text-sm font-semibold text-zinc-600"
                                     aria-disabled="true"
                                 >
                                     <span>{item.label}</span>
@@ -140,7 +140,7 @@ export default async function AdminLayout({
                         )}
                 </nav>
 
-                <div className="absolute bottom-6 left-6 right-6 space-y-3">
+                <div className="absolute bottom-5 left-5 right-5 space-y-3">
                     <Link
                         href="/"
                         className="block rounded-2xl border border-white/10 px-4 py-3 text-center text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:text-yellow-300"
@@ -159,8 +159,8 @@ export default async function AdminLayout({
                 </div>
             </aside>
 
-            <div className="lg:pl-72">
-                <header className="sticky top-0 z-40 flex min-h-20 items-center justify-between gap-4 border-b border-white/10 bg-black/75 px-6 backdrop-blur-2xl lg:px-10">
+            <div className="lg:pl-60">
+                <header className="sticky top-0 z-40 flex min-h-20 items-center justify-between gap-4 border-b border-white/10 bg-black/75 px-6 backdrop-blur-2xl">
                     <div>
                         <p className="text-sm font-bold text-white">
                             Content Management System
@@ -212,7 +212,7 @@ export default async function AdminLayout({
                         ))}
                 </nav>
 
-                <main className="px-6 py-10 lg:px-10">
+                <main className="px-4 py-8 sm:px-6 lg:px-6">
                     {children}
                 </main>
             </div>
