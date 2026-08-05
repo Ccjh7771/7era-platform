@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
 };
 
-const dashboardCards = [
+const contentCards = [
   {
     label: "Brands",
     value: "4",
@@ -121,14 +121,45 @@ const managementLinks = [
 export default async function AdminPage() {
   const admin = await requireAdmin();
   const adminClient = createAdminClient();
+  const malaysiaToday = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kuala_Lumpur",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 
   const [
+    memberResult,
+    activeMemberResult,
+    dailyClaimResult,
+    spinResult,
+    openChatResult,
     brandResult,
     gameResult,
     downloadResult,
     promotionResult,
     faqResult,
   ] = await Promise.all([
+    adminClient.from("member_profiles").select("id", {
+      count: "exact",
+      head: true,
+    }),
+    adminClient.from("member_profiles").select("id", {
+      count: "exact",
+      head: true,
+    }).eq("status", "active"),
+    adminClient.from("daily_reward_claims").select("id", {
+      count: "exact",
+      head: true,
+    }).eq("claim_date", malaysiaToday),
+    adminClient.from("spin_results").select("id", {
+      count: "exact",
+      head: true,
+    }).eq("spin_date", malaysiaToday),
+    adminClient.from("chat_conversations").select("id", {
+      count: "exact",
+      head: true,
+    }).neq("status", "closed"),
     adminClient.from("brands").select("id", {
       count: "exact",
       head: true,
@@ -151,6 +182,33 @@ export default async function AdminPage() {
     }),
   ]);
 
+  const operationCards = [
+    {
+      label: "Members",
+      value: String(memberResult.count ?? 0),
+      detail: `${activeMemberResult.count ?? 0} active`,
+      href: "/admin/members",
+    },
+    {
+      label: "Daily Check-ins",
+      value: String(dailyClaimResult.count ?? 0),
+      detail: "Claimed today",
+      href: "/admin/daily-rewards",
+    },
+    {
+      label: "Lucky Spins",
+      value: String(spinResult.count ?? 0),
+      detail: "Spins today",
+      href: "/admin/lucky-spin",
+    },
+    {
+      label: "Live Chat",
+      value: String(openChatResult.count ?? 0),
+      detail: "Open conversations",
+      href: "/admin/live-chat",
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-7xl">
       <div>
@@ -168,40 +226,63 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      <section className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
-        {dashboardCards.map((card) => (
-          <DashboardCard
-            key={card.label}
-            card={
-              card.label === "Brands"
-                ? {
-                    ...card,
-                    value: String(brandResult.count ?? 0),
-                  }
-                : card.label === "Games"
-                  ? {
-                      ...card,
-                      value: String(gameResult.count ?? 0),
-                    }
-                  : card.label === "Downloads"
-                    ? {
-                        ...card,
-                        value: String(downloadResult.count ?? 0),
-                      }
-                    : card.label === "Promotions"
-                      ? {
-                          ...card,
-                          value: String(promotionResult.count ?? 0),
-                        }
-                      : card.label === "FAQ"
-                        ? {
-                            ...card,
-                            value: String(faqResult.count ?? 0),
-                          }
-                : card
-            }
-          />
-        ))}
+      <section className="mt-10">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-300">
+              Member Operations
+            </p>
+            <h2 className="mt-3 text-2xl font-black">Today at a glance</h2>
+          </div>
+          <p className="text-xs text-zinc-500">Malaysia time · {malaysiaToday}</p>
+        </div>
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {operationCards.map((card) => (
+            <Link
+              key={card.label}
+              href={card.href}
+              prefetch={false}
+              className="rounded-[24px] border border-white/10 bg-gradient-to-b from-white/[0.07] to-black p-6 transition hover:border-yellow-400/30"
+            >
+              <p className="text-sm font-semibold text-zinc-500">{card.label}</p>
+              <p className="mt-4 text-4xl font-black text-yellow-300">{card.value}</p>
+              <p className="mt-3 text-xs font-bold uppercase tracking-[0.14em] text-zinc-500">
+                {card.detail} →
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-yellow-300">
+            Website Content
+          </p>
+          <h2 className="mt-3 text-2xl font-black">Published content</h2>
+        </div>
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+          {contentCards.map((card) => (
+            <DashboardCard
+              key={card.label}
+              card={
+                card.label === "Brands"
+                  ? { ...card, value: String(brandResult.count ?? 0) }
+                  : card.label === "Games"
+                    ? { ...card, value: String(gameResult.count ?? 0) }
+                    : card.label === "Downloads"
+                      ? { ...card, value: String(downloadResult.count ?? 0) }
+                      : card.label === "Promotions"
+                        ? { ...card, value: String(promotionResult.count ?? 0) }
+                        : card.label === "FAQ"
+                          ? { ...card, value: String(faqResult.count ?? 0) }
+                          : card
+              }
+            />
+          ))}
+        </div>
       </section>
 
       <section className="mt-12">
