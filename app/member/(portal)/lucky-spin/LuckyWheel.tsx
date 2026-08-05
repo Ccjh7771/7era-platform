@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { spinLuckyWheel, type SpinState } from "./actions";
 
 const initialSpinState: SpinState = { status: "idle", message: "" };
 
-type WheelPrize = { id: string; name: string; isThankYou: boolean };
+type WheelPrize = { id: string; name: string; imagePath: string | null; isThankYou: boolean };
 
 const palette = ["#facc15", "#f59e0b", "#111827", "#d97706", "#27272a", "#eab308"];
 
@@ -61,7 +62,21 @@ export function LuckyWheel({ prizes, canSpin }: { prizes: WheelPrize[]; canSpin:
       <div>
         <h2 className="text-2xl font-black">Wheel rewards</h2>
         <div className="mt-5 grid grid-cols-2 gap-3">
-          {prizes.map((prize, index) => <div key={prize.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-sm"><span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-black text-black" style={{ background: palette[index % palette.length] }}>{index + 1}</span>{prize.name}</div>)}
+          {prizes.map((prize, index) => (
+            <div key={prize.id} className="flex min-h-20 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-sm">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-yellow-300/20 bg-black">
+                {prize.imagePath ? (
+                  <Image src={prize.imagePath} alt={prize.name} fill sizes="56px" className="object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-center text-[10px] font-black text-yellow-300">TQ</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <span className="mb-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-black text-black" style={{ background: palette[index % palette.length] }}>{index + 1}</span>
+                <p className="font-bold leading-5 text-white">{prize.name}</p>
+              </div>
+            </div>
+          ))}
         </div>
         <form action={action} className="mt-7">
           <button disabled={disabled} className="h-14 w-full rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 text-base font-black text-black shadow-[0_0_35px_rgba(250,204,21,.22)] disabled:cursor-not-allowed disabled:bg-none disabled:bg-zinc-700 disabled:text-zinc-400">

@@ -17,10 +17,10 @@ export default async function LuckySpinPage() {
   }
 
   const [prizesResult, spinsResult] = await Promise.all([
-    supabase.from("spin_prizes").select("id, name, is_thank_you, position").eq("campaign_id", campaign.id).eq("is_active", true).order("position"),
+    supabase.from("spin_prizes").select("id, name, image_path, is_thank_you, position").eq("campaign_id", campaign.id).eq("is_active", true).order("position"),
     supabase.from("spin_results").select("id", { count: "exact", head: true }).eq("member_id", member.id).eq("campaign_id", campaign.id).eq("spin_date", today),
   ]);
-  const prizes = (prizesResult.data ?? []).map((prize) => ({ id: prize.id, name: prize.name, isThankYou: prize.is_thank_you }));
+  const prizes = (prizesResult.data ?? []).map((prize) => ({ id: prize.id, name: prize.name, imagePath: prize.image_path, isThankYou: prize.is_thank_you }));
   const spinsToday = spinsResult.count ?? 0;
   const canSpin = member.pointsBalance >= campaign.points_per_spin && spinsToday < campaign.daily_limit;
 
