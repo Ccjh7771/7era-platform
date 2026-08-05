@@ -6,7 +6,7 @@ import { MemberChat } from "./MemberChat";
 export default async function MemberChatPage() {
   const member = await requireMember();
   const supabase = await createClient();
-  const { data: conversations } = await supabase.from("chat_conversations").select("id, subject, status, last_message_at").eq("member_id", member.id).order("last_message_at", { ascending: false });
+  const { data: conversations } = await supabase.from("chat_conversations").select("id, subject, status, last_message_at, member_last_read_at").eq("member_id", member.id).order("last_message_at", { ascending: false });
   const ids = (conversations ?? []).map((conversation) => conversation.id);
   const messagesResult = ids.length > 0
     ? await supabase.from("chat_messages").select("id, conversation_id, sender_id, sender_type, body, is_internal, created_at").in("conversation_id", ids).order("created_at")

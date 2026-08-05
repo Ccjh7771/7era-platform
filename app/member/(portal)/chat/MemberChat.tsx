@@ -4,11 +4,14 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
+import { markMemberConversationRead } from "./actions";
+
 type Conversation = {
   id: string;
   subject: string;
   status: "open" | "in_progress" | "closed";
   last_message_at: string;
+  member_last_read_at: string | null;
 };
 
 type Message = {
@@ -41,11 +44,29 @@ export function MemberChat({ memberId, initialConversations, initialMessages }: 
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_conversations", filter: `member_id=eq.${memberId}` }, (payload) => {
         const updated = payload.new as Conversation;
-        setConversations((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
+        setConversations((current) => [...current.map((item) => item.id === updated.id ? { ...item, ...updated } : item)].sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at)));
       })
       .subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [memberId, supabase]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    void markMemberConversationRead(selectedId);
+  }, [messages.length, selectedId]);
+
+  const unreadCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    const conversationsById = new Map(conversations.map((conversation) => [conversation.id, conversation]));
+    for (const message of messages) {
+      if (message.sender_type === "member" || message.is_internal) continue;
+      const conversation = conversationsById.get(message.conversation_id);
+      if (!conversation?.member_last_read_at || Date.parse(message.created_at) > Date.parse(conversation.member_last_read_at)) {
+        counts.set(message.conversation_id, (counts.get(message.conversation_id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [conversations, messages]);
 
   const visibleMessages = messages.filter((message) => message.conversation_id === selectedId && !message.is_internal);
 
@@ -67,7 +88,7 @@ export function MemberChat({ memberId, initialConversations, initialMessages }: 
     if (conversationError || !conversation) { setError("Unable to start a conversation."); setBusy(false); return; }
     const { data: message, error: messageError } = await supabase.from("chat_messages").insert({ conversation_id: conversation.id, sender_id: memberId, sender_type: "member", body: newMessage.trim(), is_internal: false }).select("*").single();
     if (messageError) setError("Conversation created, but the first message could not be sent.");
-    setConversations((current) => [conversation as Conversation, ...current]);
+    setConversations((current) => [{ ...(conversation as Conversation), member_last_read_at: new Date().toISOString() }, ...current]);
     if (message) setMessages((current) => [...current, message as Message]);
     setSelectedId(conversation.id); setNewSubject(""); setNewMessage(""); setBusy(false);
   }
@@ -77,7 +98,7 @@ export function MemberChat({ memberId, initialConversations, initialMessages }: 
       <aside className="border-b border-white/10 p-5 lg:border-b-0 lg:border-r">
         <h2 className="font-black">Your conversations</h2>
         <div className="mt-4 space-y-2">
-          {conversations.map((conversation) => <button key={conversation.id} type="button" onClick={() => setSelectedId(conversation.id)} className={`w-full rounded-2xl border p-4 text-left ${selectedId === conversation.id ? "border-yellow-400/40 bg-yellow-400/10" : "border-white/10 bg-white/[0.03]"}`}><p className="font-bold">{conversation.subject}</p><p className="mt-1 text-xs uppercase text-zinc-500">{conversation.status.replace("_", " ")}</p></button>)}
+          {conversations.map((conversation) => <button key={conversation.id} type="button" onClick={() => setSelectedId(conversation.id)} className={`w-full rounded-2xl border p-4 text-left ${selectedId === conversation.id ? "border-yellow-400/40 bg-yellow-400/10" : "border-white/10 bg-white/[0.03]"}`}><div className="flex items-start justify-between gap-3"><p className="font-bold">{conversation.subject}</p>{Boolean(unreadCounts.get(conversation.id)) && <span className="shrink-0 rounded-full bg-red-400 px-2 py-0.5 text-[10px] font-black text-black">{unreadCounts.get(conversation.id)} new</span>}</div><p className="mt-1 text-xs uppercase text-zinc-500">{conversation.status.replace("_", " ")}</p></button>)}
         </div>
         <details className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4" open={conversations.length === 0}>
           <summary className="cursor-pointer font-bold text-yellow-300">Start new chat</summary>

@@ -2,9 +2,12 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { displayMalaysianPhone } from "@/lib/member/phone";
 import { createClient } from "@/lib/supabase/client";
 
-type Conversation = { id: string; member_id: string; subject: string; status: "open" | "in_progress" | "closed"; assigned_admin_id: string | null; last_message_at: string; memberName: string; memberPhone: string };
+import { markAdminConversationRead } from "./actions";
+
+type Conversation = { id: string; member_id: string; subject: string; status: "open" | "in_progress" | "closed"; assigned_admin_id: string | null; last_message_at: string; admin_last_read_at: string | null; memberName: string; memberPhone: string };
 type Message = { id: string; conversation_id: string; sender_id: string; sender_type: "member" | "admin" | "system"; body: string; is_internal: boolean; created_at: string };
 type Staff = { id: string; fullName: string };
 
@@ -24,16 +27,36 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
         const message = payload.new as Message;
         setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message]);
       })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_conversations" }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_conversations" }, async (payload) => {
         const conversation = payload.new as Omit<Conversation, "memberName" | "memberPhone">;
-        setConversations((current) => current.some((item) => item.id === conversation.id) ? current : [{ ...conversation, memberName: "New member", memberPhone: "" }, ...current]);
+        const { data: member } = await supabase.from("member_profiles").select("full_name, phone").eq("id", conversation.member_id).maybeSingle();
+        const hydrated = { ...conversation, memberName: member?.full_name ?? "Member", memberPhone: member?.phone ? displayMalaysianPhone(member.phone) : "" };
+        setConversations((current) => current.some((item) => item.id === conversation.id) ? current : [hydrated, ...current]);
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_conversations" }, (payload) => {
         const updated = payload.new as Conversation;
-        setConversations((current) => current.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
+        setConversations((current) => [...current.map((item) => item.id === updated.id ? { ...item, ...updated } : item)].sort((a, b) => Date.parse(b.last_message_at) - Date.parse(a.last_message_at)));
       }).subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [supabase]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    void markAdminConversationRead(selectedId);
+  }, [messages.length, selectedId]);
+
+  const unreadCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    const conversationsById = new Map(conversations.map((conversation) => [conversation.id, conversation]));
+    for (const message of messages) {
+      if (message.sender_type !== "member") continue;
+      const conversation = conversationsById.get(message.conversation_id);
+      if (!conversation?.admin_last_read_at || Date.parse(message.created_at) > Date.parse(conversation.admin_last_read_at)) {
+        counts.set(message.conversation_id, (counts.get(message.conversation_id) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [conversations, messages]);
 
   const selected = conversations.find((item) => item.id === selectedId);
   const visibleMessages = messages.filter((item) => item.conversation_id === selectedId);
@@ -61,7 +84,7 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
       <aside className="border-b border-white/10 p-4 xl:border-b-0 xl:border-r">
         <div className="flex items-center justify-between"><h2 className="font-black">Conversations</h2><span className="rounded-full bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-300">{conversations.filter((item) => item.status !== "closed").length} active</span></div>
         <div className="mt-4 max-h-[640px] space-y-2 overflow-y-auto">
-          {conversations.map((conversation) => <button key={conversation.id} type="button" onClick={() => setSelectedId(conversation.id)} className={`w-full rounded-2xl border p-4 text-left ${selectedId === conversation.id ? "border-yellow-400/40 bg-yellow-400/10" : "border-white/10 bg-white/[0.03]"}`}><div className="flex justify-between gap-2"><p className="font-bold">{conversation.memberName}</p><span className={`text-[10px] font-black uppercase ${conversation.status === "open" ? "text-emerald-300" : conversation.status === "closed" ? "text-zinc-600" : "text-yellow-300"}`}>{conversation.status.replace("_", " ")}</span></div><p className="mt-1 text-xs text-zinc-600">{conversation.memberPhone}</p><p className="mt-2 truncate text-sm text-zinc-400">{conversation.subject}</p></button>)}
+          {conversations.map((conversation) => <button key={conversation.id} type="button" onClick={() => setSelectedId(conversation.id)} className={`w-full rounded-2xl border p-4 text-left ${selectedId === conversation.id ? "border-yellow-400/40 bg-yellow-400/10" : "border-white/10 bg-white/[0.03]"}`}><div className="flex justify-between gap-2"><p className="font-bold">{conversation.memberName}</p><div className="flex items-center gap-2">{Boolean(unreadCounts.get(conversation.id)) && <span className="rounded-full bg-red-400 px-2 py-0.5 text-[10px] font-black text-black">{unreadCounts.get(conversation.id)} new</span>}<span className={`text-[10px] font-black uppercase ${conversation.status === "open" ? "text-emerald-300" : conversation.status === "closed" ? "text-zinc-600" : "text-yellow-300"}`}>{conversation.status.replace("_", " ")}</span></div></div><p className="mt-1 text-xs text-zinc-600">{conversation.memberPhone}</p><p className="mt-2 truncate text-sm text-zinc-400">{conversation.subject}</p></button>)}
         </div>
       </aside>
       <section className="flex min-h-[620px] flex-col">
