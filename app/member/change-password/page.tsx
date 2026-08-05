@@ -20,15 +20,15 @@ export default async function ChangeMemberPasswordPage({ searchParams }: ChangeP
         <div className="mb-8 text-center">
           <p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-300">Account security</p>
           <h1 className="mt-3 text-3xl font-black">Create a new password</h1>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">Your temporary password must be replaced with a new 6-digit password before you continue.</p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">Create a new password with at least 6 characters before you continue.</p>
         </div>
         <form action={changeMemberPassword} className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <label htmlFor="new-member-password" className="text-sm font-semibold">New password</label>
-          <input id="new-member-password" name="password" type="password" inputMode="numeric" pattern="[0-9]{6}" autoComplete="new-password" minLength={6} maxLength={6} required className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 outline-none focus:border-yellow-400/50" />
+          <input id="new-member-password" name="password" type="password" autoComplete="new-password" minLength={6} maxLength={72} required className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 outline-none focus:border-yellow-400/50" />
           <label htmlFor="confirm-member-password" className="mt-6 block text-sm font-semibold">Confirm password</label>
-          <input id="confirm-member-password" name="confirmPassword" type="password" inputMode="numeric" pattern="[0-9]{6}" autoComplete="new-password" minLength={6} maxLength={6} required className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 outline-none focus:border-yellow-400/50" />
-          <p className="mt-3 text-xs leading-5 text-zinc-500">Use exactly 6 numbers, for example 482731.</p>
-          {error && <p role="alert" className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">Enter the same 6-digit password in both fields and try again.</p>}
+          <input id="confirm-member-password" name="confirmPassword" type="password" autoComplete="new-password" minLength={6} maxLength={72} required className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 outline-none focus:border-yellow-400/50" />
+          <p className="mt-3 text-xs leading-5 text-zinc-500">Use at least 6 letters, numbers or a simple combination.</p>
+          {error && <p role="alert" className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">Enter the same password in both fields using at least 6 characters.</p>}
           <button className="mt-7 h-14 w-full rounded-2xl bg-yellow-400 font-black text-black">Save new password</button>
         </form>
       </div>
