@@ -9,13 +9,21 @@ import { MemberBottomNav } from "./MemberBottomNav";
 export default async function MemberLayout({ children }: { children: ReactNode }) {
   const member = await requireMember();
   const supabase = await createClient();
-  const { data: conversations } = await supabase
-    .from("chat_conversations")
-    .select("id, member_unread_count")
-    .eq("member_id", member.id);
+  const [conversationsResult, pendingRewardsResult] = await Promise.all([
+    supabase
+      .from("chat_conversations")
+      .select("id, member_unread_count")
+      .eq("member_id", member.id),
+    supabase
+      .from("reward_claims")
+      .select("id")
+      .eq("member_id", member.id)
+      .eq("status", "pending"),
+  ]);
   const initialChatUnreadCounts = Object.fromEntries(
-    (conversations ?? []).map((conversation) => [conversation.id, Number(conversation.member_unread_count)]),
+    (conversationsResult.data ?? []).map((conversation) => [conversation.id, Number(conversation.member_unread_count)]),
   );
+  const initialPendingRewardIds = (pendingRewardsResult.data ?? []).map((reward) => reward.id);
 
   return (
     <div className="min-h-dvh bg-[#08090b] text-white">
@@ -32,7 +40,11 @@ export default async function MemberLayout({ children }: { children: ReactNode }
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 pb-32 pt-7 sm:px-6 sm:pt-10">{children}</main>
-      <MemberBottomNav memberId={member.id} initialChatUnreadCounts={initialChatUnreadCounts} />
+      <MemberBottomNav
+        memberId={member.id}
+        initialChatUnreadCounts={initialChatUnreadCounts}
+        initialPendingRewardIds={initialPendingRewardIds}
+      />
     </div>
   );
 }
