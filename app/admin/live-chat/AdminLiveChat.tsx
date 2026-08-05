@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { displayMalaysianPhone } from "@/lib/member/phone";
 import { createClient } from "@/lib/supabase/client";
@@ -74,6 +74,7 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
+  const messageListRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -151,6 +152,12 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
 
   const selected = conversations.find((item) => item.id === selectedId);
   const visibleMessages = messages.filter((item) => item.conversation_id === selectedId);
+  const staffNames = useMemo(() => new Map(staff.map((person) => [person.id, person.fullName])), [staff]);
+
+  useEffect(() => {
+    if (!selectedId || !messageListRef.current) return;
+    messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+  }, [selectedId, visibleMessages.length]);
 
   async function send(event: FormEvent) {
     event.preventDefault();
@@ -287,14 +294,14 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
               </div>
             </header>
 
-            <div className="flex-1 space-y-3 overflow-y-auto p-4 sm:p-7">
+            <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto p-4 sm:p-7" aria-live="polite">
               {visibleMessages.length === 0 && <div className="flex h-full items-center justify-center text-sm text-zinc-500">No messages yet.</div>}
               {visibleMessages.map((message) => (
                 <div key={message.id} className={`flex ${message.sender_type === "member" ? "justify-start" : "justify-end"}`}>
                   <div className={`max-w-[86%] rounded-2xl border px-4 py-3 sm:max-w-[82%] ${message.is_internal ? "border-purple-400/30 bg-purple-400/10" : message.sender_type === "member" ? "border-white/10 bg-white/[0.06]" : "border-yellow-400/20 bg-yellow-400/10"}`}>
                     <p className="whitespace-pre-wrap text-sm leading-6">{message.body}</p>
                     <p className="mt-1 flex flex-wrap justify-between gap-x-4 gap-y-1 text-[10px] text-zinc-600">
-                      <span>{message.is_internal ? "Internal note" : message.sender_type === "member" ? selected.memberName : message.sender_id === adminId ? "You" : "Support staff"}</span>
+                      <span>{message.is_internal ? `Internal note · ${message.sender_id === adminId ? "You" : staffNames.get(message.sender_id) ?? "Support staff"}` : message.sender_type === "member" ? selected.memberName : message.sender_id === adminId ? "You" : staffNames.get(message.sender_id) ?? "Support staff"}</span>
                       <time dateTime={message.created_at}>{malaysiaMessageTime.format(new Date(message.created_at))}</time>
                     </p>
                   </div>

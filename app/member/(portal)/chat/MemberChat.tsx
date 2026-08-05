@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -38,6 +38,15 @@ const malaysiaTime = new Intl.DateTimeFormat("en-MY", {
   timeZone: "Asia/Kuala_Lumpur",
 });
 
+const malaysiaMessageTime = new Intl.DateTimeFormat("en-MY", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "Asia/Kuala_Lumpur",
+});
+
 export function MemberChat({ memberId, initialConversations, initialMessages, initialSelectedId }: MemberChatProps) {
   const validInitialId = initialConversations.some((conversation) => conversation.id === initialSelectedId)
     ? initialSelectedId ?? ""
@@ -50,6 +59,7 @@ export function MemberChat({ memberId, initialConversations, initialMessages, in
   const [newMessage, setNewMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const messageListRef = useRef<HTMLDivElement>(null);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -100,6 +110,11 @@ export function MemberChat({ memberId, initialConversations, initialMessages, in
 
   const selectedConversation = conversations.find((conversation) => conversation.id === selectedId);
   const visibleMessages = messages.filter((message) => message.conversation_id === selectedId && !message.is_internal);
+
+  useEffect(() => {
+    if (!selectedId || !messageListRef.current) return;
+    messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+  }, [selectedId, visibleMessages.length]);
 
   async function sendMessage(event: FormEvent) {
     event.preventDefault();
@@ -203,14 +218,17 @@ export function MemberChat({ memberId, initialConversations, initialMessages, in
           ) : <p className="text-sm text-zinc-500">Select a conversation</p>}
         </header>
 
-        <div className="flex-1 space-y-3 overflow-y-auto p-5 sm:p-7">
+        <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto p-5 sm:p-7" aria-live="polite">
           {!selectedId && <div className="flex h-full items-center justify-center text-sm text-zinc-500">Select a conversation to contact support.</div>}
           {selectedId && visibleMessages.length === 0 && <div className="flex h-full items-center justify-center text-sm text-zinc-500">No messages yet.</div>}
           {visibleMessages.map((message) => (
             <div key={message.id} className={`flex ${message.sender_type === "member" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[82%] rounded-2xl px-4 py-3 ${message.sender_type === "member" ? "bg-yellow-400 text-black" : "border border-white/10 bg-white/[0.06] text-white"}`}>
                 <p className="whitespace-pre-wrap text-sm leading-6">{message.body}</p>
-                <p className={`mt-1 text-[10px] ${message.sender_type === "member" ? "text-black/50" : "text-zinc-600"}`}>{message.sender_type === "member" ? "You" : "7ERA Support"}</p>
+                <p className={`mt-1 flex flex-wrap justify-between gap-x-4 gap-y-1 text-[10px] ${message.sender_type === "member" ? "text-black/50" : "text-zinc-600"}`}>
+                  <span>{message.sender_type === "member" ? "You" : "7ERA Support"}</span>
+                  <time dateTime={message.created_at}>{malaysiaMessageTime.format(new Date(message.created_at))}</time>
+                </p>
               </div>
             </div>
           ))}
