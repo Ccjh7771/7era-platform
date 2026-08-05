@@ -10,6 +10,7 @@ export type MemberProfile = {
   phone: string;
   fullName: string;
   pointsBalance: number;
+  avatarPath: string | null;
 };
 
 export const requireMember = cache(async (): Promise<MemberProfile> => {
@@ -23,7 +24,7 @@ export const requireMember = cache(async (): Promise<MemberProfile> => {
 
   const { data: profile, error: profileError } = await supabase
     .from("member_profiles")
-    .select("phone, full_name, status, must_change_password, points_balance")
+    .select("phone, full_name, status, must_change_password, points_balance, avatar_path")
     .eq("id", userId)
     .single();
 
@@ -41,5 +42,6 @@ export const requireMember = cache(async (): Promise<MemberProfile> => {
     phone: profile.phone,
     fullName: profile.full_name,
     pointsBalance: Number(profile.points_balance),
+    avatarPath: profile.avatar_path,
   };
 });

@@ -50,6 +50,13 @@ const nextConfig: NextConfig = {
                 pathname:
                     "/storage/v1/object/public/engagement-assets/**",
             },
+            {
+                protocol: "https",
+                hostname:
+                    "imkfmynzsnjckdzctwpp.supabase.co",
+                pathname:
+                    "/storage/v1/object/sign/member-avatars/**",
+            },
         ],
     },
 };
