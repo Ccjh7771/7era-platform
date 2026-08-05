@@ -1,7 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateTemporaryPassword } from "@/lib/member/password";
+import { isValidMemberPassword } from "@/lib/member/password";
 import {
   displayMalaysianPhone,
   memberEmailForPhone,
@@ -12,7 +12,6 @@ export type RegistrationState = {
   status: "idle" | "error" | "success";
   message: string;
   phone?: string;
-  temporaryPassword?: string;
 };
 
 export async function registerMember(
@@ -22,6 +21,8 @@ export async function registerMember(
   void previousState;
   const fullName = String(formData.get("fullName") ?? "").trim();
   const phone = normalizeMalaysianPhone(String(formData.get("phone") ?? ""));
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const website = String(formData.get("website") ?? "");
 
   if (website) {
@@ -32,6 +33,13 @@ export async function registerMember(
     return {
       status: "error",
       message: "Enter your full name and a valid Malaysian mobile number.",
+    };
+  }
+
+  if (!isValidMemberPassword(password) || password !== confirmPassword) {
+    return {
+      status: "error",
+      message: "Enter the same password in both fields. Use at least 6 characters.",
     };
   }
 
@@ -54,10 +62,9 @@ export async function registerMember(
     };
   }
 
-  const temporaryPassword = generateTemporaryPassword();
   const { data: createdData, error: createError } = await adminClient.auth.admin.createUser({
     email: memberEmailForPhone(phone),
-    password: temporaryPassword,
+    password,
     email_confirm: true,
     app_metadata: { account_type: "member" },
     user_metadata: { full_name: fullName, phone },
@@ -79,7 +86,7 @@ export async function registerMember(
       phone,
       full_name: fullName,
       status: "active",
-      must_change_password: true,
+      must_change_password: false,
     },
     { onConflict: "id" },
   );
@@ -95,8 +102,7 @@ export async function registerMember(
 
   return {
     status: "success",
-    message: "Your account is ready. Save the temporary password now; it is shown only once.",
+    message: "Your account is ready. Sign in with your mobile number and the password you created.",
     phone: displayMalaysianPhone(phone),
-    temporaryPassword,
   };
 }

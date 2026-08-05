@@ -20,7 +20,7 @@ export default async function AdminMembersPage({ searchParams }: MembersPageProp
     <section>
       <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">Membership</p>
       <h1 className="mt-3 text-3xl font-black">Members</h1>
-      <p className="mt-2 text-sm text-zinc-500">View profiles, manage points, suspend access and issue temporary passwords.</p>
+      <p className="mt-2 text-sm text-zinc-500">View profiles, manage points, suspend access and update forgotten passwords.</p>
       {success && <p className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">Member account updated successfully.</p>}
       {(error || membersError) && <p className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">The requested member operation could not be completed.</p>}
       <div className="mt-8 space-y-5">

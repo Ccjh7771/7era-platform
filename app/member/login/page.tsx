@@ -30,7 +30,7 @@ export default async function MemberLoginPage({ searchParams }: LoginPageProps) 
           <input id="member-password" name="password" type="password" autoComplete="current-password" required minLength={6} maxLength={72} className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 text-white outline-none focus:border-yellow-400/50" />
           {errorMessage && <p role="alert" className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">{errorMessage}</p>}
           <button className="mt-7 flex h-14 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 font-black text-black">Sign in</button>
-          <p className="mt-5 text-center text-xs leading-5 text-zinc-500">Forgot your password? Contact our support team. An administrator will issue a new temporary password.</p>
+          <p className="mt-5 text-center text-xs leading-5 text-zinc-500">Forgot your password? Contact our support team. An administrator will set a new password for you.</p>
         </form>
         <p className="mt-7 text-center text-sm text-zinc-500">New member? <Link href="/register" className="font-bold text-yellow-300">Register now</Link></p>
       </div>
