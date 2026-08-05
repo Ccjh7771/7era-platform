@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { displayMalaysianPhone } from "@/lib/member/phone";
 import { createClient } from "@/lib/supabase/client";
@@ -30,6 +30,7 @@ type Message = {
 };
 
 type Staff = { id: string; fullName: string };
+type ConversationFilter = "all" | "unread" | "active" | "mine";
 
 type AdminLiveChatProps = {
   adminId: string;
@@ -55,6 +56,13 @@ const malaysiaMessageTime = new Intl.DateTimeFormat("en-MY", {
   timeZone: "Asia/Kuala_Lumpur",
 });
 
+const conversationFilters: Array<{ id: ConversationFilter; label: string }> = [
+  { id: "all", label: "All" },
+  { id: "unread", label: "Unread" },
+  { id: "active", label: "Active" },
+  { id: "mine", label: "Mine" },
+];
+
 export function AdminLiveChat({ adminId, canReply, initialConversations, initialMessages, staff }: AdminLiveChatProps) {
   const [conversations, setConversations] = useState(initialConversations);
   const [messages, setMessages] = useState(initialMessages);
@@ -63,6 +71,9 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
   const [internal, setInternal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<ConversationFilter>("all");
+  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
@@ -123,6 +134,21 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
     return latest;
   }, [messages]);
 
+  const filteredConversations = useMemo(() => conversations.filter((conversation) => {
+    const latest = latestMessages.get(conversation.id);
+    const matchesSearch = deferredSearch.length === 0 || [
+      conversation.memberName,
+      conversation.memberPhone,
+      conversation.subject,
+      latest?.body ?? "",
+    ].some((value) => value.toLowerCase().includes(deferredSearch));
+    if (!matchesSearch) return false;
+    if (filter === "unread") return (unreadCounts.get(conversation.id) ?? 0) > 0;
+    if (filter === "active") return conversation.status !== "closed";
+    if (filter === "mine") return conversation.assigned_admin_id === adminId;
+    return true;
+  }), [adminId, conversations, deferredSearch, filter, latestMessages, unreadCounts]);
+
   const selected = conversations.find((item) => item.id === selectedId);
   const visibleMessages = messages.filter((item) => item.conversation_id === selectedId);
 
@@ -168,9 +194,37 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
           </span>
         </div>
 
+        <div className="mt-4 space-y-3">
+          <label className="block">
+            <span className="sr-only">Search conversations</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search member, phone or message"
+              className="h-11 w-full rounded-xl border border-white/10 bg-black/60 px-3 text-sm outline-none placeholder:text-zinc-700 focus:border-yellow-400/40"
+            />
+          </label>
+          <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Conversation filters">
+            {conversationFilters.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setFilter(item.id)}
+                aria-pressed={filter === item.id}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-black transition ${filter === item.id ? "border-yellow-400/30 bg-yellow-400/10 text-yellow-300" : "border-white/10 text-zinc-500 hover:text-zinc-300"}`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-zinc-600">Showing {filteredConversations.length} of {conversations.length}</p>
+        </div>
+
         <div className="mt-4 max-h-[640px] divide-y divide-white/10 overflow-y-auto">
           {conversations.length === 0 && <p className="rounded-2xl border border-white/10 p-6 text-center text-sm text-zinc-500">No conversations yet.</p>}
-          {conversations.map((conversation) => {
+          {conversations.length > 0 && filteredConversations.length === 0 && <p className="rounded-2xl border border-white/10 p-6 text-center text-sm text-zinc-500">No matching conversations.</p>}
+          {filteredConversations.map((conversation) => {
             const unread = unreadCounts.get(conversation.id) ?? 0;
             const latest = latestMessages.get(conversation.id);
             return (
