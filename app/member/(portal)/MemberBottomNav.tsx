@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+import { createClient } from "@/lib/supabase/client";
 
 type IconName = "check-in" | "spin" | "history" | "chat" | "profile";
 
@@ -33,8 +36,38 @@ function NavIcon({ name }: { name: IconName }) {
   return <path d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />;
 }
 
-export function MemberBottomNav() {
+type ConversationUnreadUpdate = {
+  id: string;
+  member_unread_count: number;
+};
+
+export function MemberBottomNav({ memberId, initialChatUnreadCounts }: { memberId: string; initialChatUnreadCounts: Record<string, number> }) {
   const pathname = usePathname();
+  const [chatUnreadCounts, setChatUnreadCounts] = useState(initialChatUnreadCounts);
+  const supabase = useMemo(() => createClient(), []);
+  const totalChatUnread = Object.values(chatUnreadCounts).reduce((total, count) => total + count, 0);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`member-nav-${memberId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_conversations", filter: `member_id=eq.${memberId}` },
+        (payload) => {
+          const updated = payload.new as ConversationUnreadUpdate;
+          if (!updated.id) return;
+          setChatUnreadCounts((current) => ({
+            ...current,
+            [updated.id]: Number(updated.member_unread_count ?? 0),
+          }));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [memberId, supabase]);
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" aria-label="Member navigation">
@@ -48,11 +81,16 @@ export function MemberBottomNav() {
               href={item.href}
               prefetch={false}
               aria-current={active ? "page" : undefined}
-              className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-[20px] px-1 text-center transition ${active ? "bg-white/10 text-yellow-300" : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-200"}`}
+              className={`relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-[20px] px-1 text-center transition ${active ? "bg-white/10 text-yellow-300" : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-200"}`}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6 stroke-current" fill="none" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <NavIcon name={item.icon} />
               </svg>
+              {item.icon === "chat" && totalChatUnread > 0 && (
+                <span className="absolute right-2 top-1 flex min-w-5 items-center justify-center rounded-full bg-emerald-400 px-1.5 py-0.5 text-[10px] font-black leading-none text-black sm:right-3">
+                  {totalChatUnread > 99 ? "99+" : totalChatUnread}
+                </span>
+              )}
               <span className="text-[10px] font-bold leading-tight sm:text-xs">{item.label}</span>
             </Link>
           );
