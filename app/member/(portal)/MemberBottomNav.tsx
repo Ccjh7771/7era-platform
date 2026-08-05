@@ -41,11 +41,29 @@ type ConversationUnreadUpdate = {
   member_unread_count: number;
 };
 
-export function MemberBottomNav({ memberId, initialChatUnreadCounts }: { memberId: string; initialChatUnreadCounts: Record<string, number> }) {
+type RewardClaimUpdate = {
+  id: string;
+  status: "pending" | "fulfilled" | "cancelled";
+};
+
+type MemberBottomNavProps = {
+  memberId: string;
+  initialChatUnreadCounts: Record<string, number>;
+  initialPendingRewardIds: string[];
+};
+
+export function MemberBottomNav({ memberId, initialChatUnreadCounts, initialPendingRewardIds }: MemberBottomNavProps) {
   const pathname = usePathname();
   const [chatUnreadCounts, setChatUnreadCounts] = useState(initialChatUnreadCounts);
+  const [rewardStatusOverrides, setRewardStatusOverrides] = useState<Record<string, RewardClaimUpdate["status"]>>({});
   const supabase = useMemo(() => createClient(), []);
   const totalChatUnread = Object.values(chatUnreadCounts).reduce((total, count) => total + count, 0);
+  const pendingRewardIds = new Set(initialPendingRewardIds);
+  for (const [rewardId, status] of Object.entries(rewardStatusOverrides)) {
+    if (status === "pending") pendingRewardIds.add(rewardId);
+    else pendingRewardIds.delete(rewardId);
+  }
+  const totalPendingRewards = pendingRewardIds.size;
 
   useEffect(() => {
     const channel = supabase
@@ -60,6 +78,24 @@ export function MemberBottomNav({ memberId, initialChatUnreadCounts }: { memberI
             ...current,
             [updated.id]: Number(updated.member_unread_count ?? 0),
           }));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "reward_claims", filter: `member_id=eq.${memberId}` },
+        (payload) => {
+          const reward = payload.new as RewardClaimUpdate;
+          if (!reward.id) return;
+          setRewardStatusOverrides((current) => ({ ...current, [reward.id]: reward.status }));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "reward_claims", filter: `member_id=eq.${memberId}` },
+        (payload) => {
+          const reward = payload.new as RewardClaimUpdate;
+          if (!reward.id) return;
+          setRewardStatusOverrides((current) => ({ ...current, [reward.id]: reward.status }));
         },
       )
       .subscribe();
@@ -89,6 +125,11 @@ export function MemberBottomNav({ memberId, initialChatUnreadCounts }: { memberI
               {item.icon === "chat" && totalChatUnread > 0 && (
                 <span className="absolute right-2 top-1 flex min-w-5 items-center justify-center rounded-full bg-emerald-400 px-1.5 py-0.5 text-[10px] font-black leading-none text-black sm:right-3">
                   {totalChatUnread > 99 ? "99+" : totalChatUnread}
+                </span>
+              )}
+              {item.icon === "history" && totalPendingRewards > 0 && (
+                <span className="absolute right-2 top-1 flex min-w-5 items-center justify-center rounded-full bg-yellow-400 px-1.5 py-0.5 text-[10px] font-black leading-none text-black sm:right-3">
+                  {totalPendingRewards > 99 ? "99+" : totalPendingRewards}
                 </span>
               )}
               <span className="text-[10px] font-bold leading-tight sm:text-xs">{item.label}</span>
