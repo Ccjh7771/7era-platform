@@ -117,7 +117,7 @@ export default async function AdminMemberDetailPage({ params }: MemberDetailPage
               <div><strong className="text-sm">{chat.subject}</strong><time dateTime={chat.last_message_at} className="mt-1 block text-xs text-zinc-600">Last message {formatMalaysiaDateTime(chat.last_message_at)}</time></div><StatusBadge status={chat.status} />
             </article>
           ))}
-          {chats.length > 0 ? <Link href="/admin/live-chat" prefetch={false} className="inline-flex rounded-xl border border-yellow-400/20 px-4 py-2 text-xs font-bold text-yellow-300">Open Live Chat workspace</Link> : null}
+          <Link href={`/admin/live-chat?member=${memberId}`} prefetch={false} className="inline-flex rounded-xl border border-yellow-400/20 px-4 py-2 text-xs font-bold text-yellow-300">Open member Live Chat</Link>
         </ActivitySection>
       </div>
     </section>

@@ -30,6 +30,7 @@ type Message = {
 };
 
 type Staff = { id: string; fullName: string };
+type RequestedMember = { id: string; name: string; phone: string };
 type ConversationFilter = "all" | "unread" | "active" | "mine";
 
 type AdminLiveChatProps = {
@@ -38,6 +39,7 @@ type AdminLiveChatProps = {
   initialConversations: Conversation[];
   initialMessages: Message[];
   staff: Staff[];
+  requestedMember: RequestedMember | null;
 };
 
 const malaysiaTime = new Intl.DateTimeFormat("en-MY", {
@@ -63,15 +65,16 @@ const conversationFilters: Array<{ id: ConversationFilter; label: string }> = [
   { id: "mine", label: "Mine" },
 ];
 
-export function AdminLiveChat({ adminId, canReply, initialConversations, initialMessages, staff }: AdminLiveChatProps) {
+export function AdminLiveChat({ adminId, canReply, initialConversations, initialMessages, staff, requestedMember }: AdminLiveChatProps) {
+  const initialSelectedId = requestedMember ? initialConversations.find((conversation) => conversation.member_id === requestedMember.id)?.id ?? "" : "";
   const [conversations, setConversations] = useState(initialConversations);
   const [messages, setMessages] = useState(initialMessages);
-  const [selectedId, setSelectedId] = useState("");
+  const [selectedId, setSelectedId] = useState(initialSelectedId);
   const [body, setBody] = useState("");
   const [internal, setInternal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSelectedId ? "" : requestedMember?.phone ?? "");
   const [filter, setFilter] = useState<ConversationFilter>("all");
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
   const messageListRef = useRef<HTMLDivElement>(null);
@@ -323,6 +326,15 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
               </form>
             )}
           </>
+        ) : requestedMember ? (
+          <div className="flex h-full items-center justify-center p-8 text-center">
+            <div>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-400/10 text-xl font-black text-yellow-300">{requestedMember.name.charAt(0).toUpperCase() || "M"}</div>
+              <p className="mt-4 font-black text-white">{requestedMember.name}</p>
+              <p className="mt-1 text-sm text-zinc-500">{requestedMember.phone}</p>
+              <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-500">This member has not started a Live Chat conversation yet. Ask the member to open Live Chat and send the first message.</p>
+            </div>
+          </div>
         ) : <div className="flex h-full items-center justify-center text-zinc-500">Select a conversation.</div>}
       </section>
     </div>

@@ -107,7 +107,7 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
                   <TableCell className="text-right font-mono font-bold text-yellow-300">{member.pointsBalance.toLocaleString("en-MY")}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <Link href="/admin/live-chat" prefetch={false} className="rounded border border-white/15 bg-white/[0.05] px-2 py-1 text-[9px] font-bold text-zinc-300 hover:border-yellow-400/40 hover:text-yellow-300">CHAT</Link>
+                      <Link href={`/admin/live-chat?member=${member.id}`} prefetch={false} className="rounded border border-white/15 bg-white/[0.05] px-2 py-1 text-[9px] font-bold text-zinc-300 hover:border-yellow-400/40 hover:text-yellow-300">CHAT</Link>
                       <Link href={`/admin/members/${member.id}`} prefetch={false} className="rounded border border-white/15 bg-white/[0.05] px-2 py-1 text-[9px] font-bold text-zinc-300 hover:border-yellow-400/40 hover:text-yellow-300">PROFILE</Link>
                       {(canEditPoints || isOwner) && <button type="button" onClick={() => setOpenMemberId((current) => current === member.id ? null : member.id)} aria-expanded={openMemberId === member.id} className="rounded border border-yellow-400/30 bg-yellow-400/10 px-2 py-1 text-[9px] font-bold text-yellow-300 hover:bg-yellow-400/20">MANAGE</button>}
                     </div>
