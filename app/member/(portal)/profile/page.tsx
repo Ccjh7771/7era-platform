@@ -1,12 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { requireMember } from "@/lib/member/access";
 import { displayMalaysianPhone } from "@/lib/member/phone";
+import { createClient } from "@/lib/supabase/server";
 
 import { logoutMember } from "../../actions";
+import { AvatarUpload } from "./AvatarUpload";
 
 export default async function MemberProfilePage() {
   const member = await requireMember();
+  const supabase = await createClient();
+  const avatarResult = member.avatarPath
+    ? await supabase.storage.from("member-avatars").createSignedUrl(member.avatarPath, 3600)
+    : null;
+  const avatarUrl = avatarResult?.data?.signedUrl ?? null;
 
   return (
     <section className="mx-auto max-w-2xl">
@@ -15,11 +23,12 @@ export default async function MemberProfilePage() {
 
       <article className="mt-8 overflow-hidden rounded-[30px] border border-white/10 bg-white/[0.04]">
         <div className="flex flex-col items-center border-b border-white/10 bg-gradient-to-b from-yellow-400/10 to-transparent px-6 py-9 text-center">
-          <span className="flex h-24 w-24 items-center justify-center rounded-full border border-yellow-400/30 bg-yellow-400/15 text-4xl font-black text-yellow-300">
-            {member.fullName.trim().charAt(0).toUpperCase() || "7"}
+          <span className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-yellow-400/30 bg-yellow-400/15 text-4xl font-black text-yellow-300">
+            {avatarUrl ? <Image src={avatarUrl} alt={`${member.fullName} profile`} fill sizes="96px" className="object-cover" priority /> : member.fullName.trim().charAt(0).toUpperCase() || "7"}
           </span>
           <h2 className="mt-4 text-2xl font-black">{member.fullName}</h2>
           <p className="mt-1 text-zinc-500">7ERA Member</p>
+          <AvatarUpload memberId={member.id} hasAvatar={Boolean(avatarUrl)} />
         </div>
 
         <dl className="divide-y divide-white/10 px-6">
