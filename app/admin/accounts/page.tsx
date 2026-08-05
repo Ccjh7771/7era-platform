@@ -29,6 +29,21 @@ const errorMessages: Record<string, string> = {
         "Unable to create the account. Please try again.",
     profile_failed:
         "The account profile could not be updated.",
+    invalid_status:
+        "The requested account status is invalid.",
+    status_not_allowed:
+        "Owner accounts cannot be suspended from this page.",
+    status_failed:
+        "Unable to update the account status. Please try again.",
+};
+
+const successMessages: Record<string, string> = {
+    created:
+        "Administrator account created successfully. The staff member must change the temporary password after signing in.",
+    password_reset:
+        "Staff password reset successfully. The staff member must change it after their next login.",
+    status_updated:
+        "Administrator account status updated successfully.",
 };
 
 
@@ -116,14 +131,12 @@ export default async function AdminAccountsPage({
                 </p>
             </div>
 
-            {successCode === "password_reset" && (
+            {successCode && successMessages[successCode] && (
                 <div
                     className="mt-8 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-5 py-4 text-sm text-emerald-200"
                     role="status"
                 >
-                    Staff password reset successfully.
-                    The staff member must change it after
-                    their next login.
+                    {successMessages[successCode]}
                 </div>
             )}
 
@@ -217,6 +230,10 @@ export default async function AdminAccountsPage({
                                 defaultValue="editor"
                                 className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 text-white outline-none transition focus:border-yellow-400/50 focus:ring-2 focus:ring-yellow-400/10"
                             >
+                                <option value="owner">
+                                    Owner (full access)
+                                </option>
+
                                 <option value="editor">
                                     Editor
                                 </option>
@@ -227,9 +244,12 @@ export default async function AdminAccountsPage({
                             </select>
 
                             <p className="mt-2 text-xs leading-5 text-zinc-600">
-                                Editors can manage
-                                content. Viewers receive
-                                read-only access.
+                                Owners have full access,
+                                including staff accounts and
+                                settings. Editors manage
+                                operations and content.
+                                Viewers receive read-only
+                                access.
                             </p>
                         </div>
 
