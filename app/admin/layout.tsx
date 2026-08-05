@@ -3,8 +3,10 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { requireAdmin } from "@/lib/admin/access";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 import { logoutAdmin } from "./actions";
+import { AdminLiveChatBadge, AdminUnreadProvider } from "./AdminUnreadProvider";
 
 type AdminNavigationItem = {
     label: string;
@@ -71,12 +73,21 @@ export default async function AdminLayout({
     children: ReactNode;
 }>) {
     const adminProfile = await requireAdmin();
+    const client = createAdminClient();
+    const [conversationReadResult, memberMessagesResult] = await Promise.all([
+        client.from("chat_conversations").select("id, admin_last_read_at").order("last_message_at", { ascending: false }).limit(250),
+        client.from("chat_messages").select("id, conversation_id, created_at").eq("sender_type", "member").order("created_at", { ascending: false }).limit(5000),
+    ]);
     const visibleNavigation = adminNavigation.filter(
         (item) =>
             !item.ownerOnly || adminProfile.role === "owner",
     );
 
     return (
+        <AdminUnreadProvider
+            initialConversations={conversationReadResult.data ?? []}
+            initialMemberMessages={memberMessagesResult.data ?? []}
+        >
         <div className="min-h-screen bg-zinc-950 text-white">
             <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-white/10 bg-black/80 p-6 backdrop-blur-2xl lg:block">
                 <Link
@@ -109,9 +120,10 @@ export default async function AdminLayout({
                                     key={item.href}
                                     href={item.href}
                                     prefetch={false}
-                                    className="rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:bg-yellow-400/10 hover:text-yellow-300"
+                                    className="flex items-center justify-between gap-3 rounded-2xl border border-transparent px-4 py-3 text-sm font-semibold text-zinc-400 transition hover:border-yellow-400/20 hover:bg-yellow-400/10 hover:text-yellow-300"
                                 >
-                                    {item.label}
+                                    <span>{item.label}</span>
+                                    {item.href === "/admin/live-chat" && <AdminLiveChatBadge />}
                                 </Link>
                             ) : (
                                 <div
@@ -192,9 +204,10 @@ export default async function AdminLayout({
                                 key={item.href}
                                 href={item.href}
                                 prefetch={false}
-                                className="shrink-0 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-bold text-zinc-300 transition hover:border-yellow-400/30 hover:text-yellow-300"
+                                className="flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-bold text-zinc-300 transition hover:border-yellow-400/30 hover:text-yellow-300"
                             >
-                                {item.label}
+                                <span>{item.label}</span>
+                                {item.href === "/admin/live-chat" && <AdminLiveChatBadge />}
                             </Link>
                         ))}
                 </nav>
@@ -204,5 +217,6 @@ export default async function AdminLayout({
                 </main>
             </div>
         </div>
+        </AdminUnreadProvider>
     );
 }
