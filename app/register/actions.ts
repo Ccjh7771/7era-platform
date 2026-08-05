@@ -1,5 +1,7 @@
 "use server";
 
+import { redirect } from "next/navigation";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidMemberPassword } from "@/lib/member/password";
 import {
@@ -7,6 +9,7 @@ import {
   memberEmailForPhone,
   normalizeMalaysianPhone,
 } from "@/lib/member/phone";
+import { createClient } from "@/lib/supabase/server";
 
 export type RegistrationState = {
   status: "idle" | "error" | "success";
@@ -99,6 +102,23 @@ export async function registerMember(
       message: "Unable to create the account. Please try again.",
     };
   }
+
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: memberEmailForPhone(phone),
+    password,
+  });
+
+  if (!signInError) {
+    await adminClient
+      .from("member_profiles")
+      .update({ last_login_at: new Date().toISOString() })
+      .eq("id", createdData.user.id);
+
+    redirect("/member");
+  }
+
+  console.error("Automatic member sign-in failed:", signInError.message);
 
   return {
     status: "success",
