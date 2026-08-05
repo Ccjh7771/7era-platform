@@ -17,7 +17,7 @@ export default async function MemberChatPage({ searchParams }: { searchParams: P
     <section>
       <p className="text-xs font-black uppercase tracking-[0.28em] text-yellow-300">Direct support</p>
       <h1 className="mt-3 text-3xl font-black">7ERA Live Chat</h1>
-      <p className="mb-8 mt-2 text-sm text-zinc-500">Messages are handled by our own support team inside 7ERA.</p>
+      <p className="mb-5 mt-2 text-sm text-zinc-500 sm:mb-8">Messages are handled by our own support team inside 7ERA.</p>
       <MemberChat memberId={member.id} initialConversations={(conversations ?? []) as never[]} initialMessages={(messagesResult.data ?? []) as never[]} initialSelectedId={params.conversation} />
     </section>
   );
