@@ -9,6 +9,8 @@ import { adjustMemberPoints, setMemberStatus, updateMemberBusinessProfile } from
 import { ResetMemberPassword } from "./ResetMemberPassword";
 
 type MemberFilter = "all" | "active" | "suspended" | "never_logged_in";
+type MemberSortKey = "createdAt" | "fullName" | "phone" | "status" | "pointsBalance";
+type MemberSort = { key: MemberSortKey; direction: "asc" | "desc" };
 
 export type AdminMemberRecord = {
   id: string;
@@ -42,16 +44,31 @@ const memberFilters: Array<{ id: MemberFilter; label: string }> = [
 export function MembersPanel({ members, summary, canEditPoints, isOwner }: { members: AdminMemberRecord[]; summary: MemberSummary; canEditPoints: boolean; isOwner: boolean }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<MemberFilter>("all");
+  const [sort, setSort] = useState<MemberSort>({ key: "createdAt", direction: "desc" });
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
-  const filteredMembers = useMemo(() => members.filter((member) => {
-    const matchesSearch = deferredSearch.length === 0 || [member.fullName, member.phone, member.bankAccount, member.bankName, member.referrerName, member.topReferrerName].some((value) => value.toLowerCase().includes(deferredSearch));
-    if (!matchesSearch) return false;
-    if (filter === "never_logged_in") return member.lastLoginAt === null;
-    if (filter === "active" || filter === "suspended") return member.status === filter;
-    return true;
-  }), [deferredSearch, filter, members]);
+  const filteredMembers = useMemo(() => {
+    const filtered = members.filter((member) => {
+      const matchesSearch = deferredSearch.length === 0 || [member.fullName, member.phone, member.bankAccount, member.bankName, member.referrerName, member.topReferrerName].some((value) => value.toLowerCase().includes(deferredSearch));
+      if (!matchesSearch) return false;
+      if (filter === "never_logged_in") return member.lastLoginAt === null;
+      if (filter === "active" || filter === "suspended") return member.status === filter;
+      return true;
+    });
+    return [...filtered].sort((a, b) => {
+      const first = sort.key === "createdAt" ? Date.parse(a.createdAt) : sort.key === "pointsBalance" ? a.pointsBalance : a[sort.key];
+      const second = sort.key === "createdAt" ? Date.parse(b.createdAt) : sort.key === "pointsBalance" ? b.pointsBalance : b[sort.key];
+      const comparison = typeof first === "number" && typeof second === "number" ? first - second : String(first).localeCompare(String(second), "en-MY", { numeric: true, sensitivity: "base" });
+      return sort.direction === "asc" ? comparison : -comparison;
+    });
+  }, [deferredSearch, filter, members, sort]);
+
+  function changeSort(key: MemberSortKey) {
+    setSort((current) => current.key === key
+      ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+      : { key, direction: key === "createdAt" || key === "pointsBalance" ? "desc" : "asc" });
+  }
 
   return (
     <div className="mt-6">
@@ -80,15 +97,15 @@ export function MembersPanel({ members, summary, canEditPoints, isOwner }: { mem
         <table className="w-full table-fixed border-collapse text-[11px] text-zinc-200">
           <thead className="bg-zinc-800 text-left text-[10px] font-bold uppercase tracking-wide text-zinc-300">
             <tr>
-              <TableHeading className="hidden w-[125px] xl:table-cell">Register Date ▼</TableHeading>
-              <TableHeading className="w-[140px]">Name</TableHeading>
-              <TableHeading className="w-[120px]">Mobile</TableHeading>
+              <SortableHeading label="Register Date" sortKey="createdAt" sort={sort} onSort={changeSort} className="hidden w-[125px] xl:table-cell" />
+              <SortableHeading label="Name" sortKey="fullName" sort={sort} onSort={changeSort} className="w-[140px]" />
+              <SortableHeading label="Mobile" sortKey="phone" sort={sort} onSort={changeSort} className="w-[120px]" />
               <TableHeading className="hidden w-[135px] 2xl:table-cell">Bank Account</TableHeading>
               <TableHeading className="hidden w-[90px] 2xl:table-cell">Bank</TableHeading>
               <TableHeading className="hidden w-[130px] 2xl:table-cell">Referrer</TableHeading>
               <TableHeading className="hidden w-[130px] 2xl:table-cell">Top Referrer</TableHeading>
-              <TableHeading className="w-[75px]">Status</TableHeading>
-              <TableHeading className="w-[70px] text-right">Points</TableHeading>
+              <SortableHeading label="Status" sortKey="status" sort={sort} onSort={changeSort} className="w-[75px]" />
+              <SortableHeading label="Points" sortKey="pointsBalance" sort={sort} onSort={changeSort} className="w-[70px]" align="right" />
               <TableHeading className="w-[155px]">Action</TableHeading>
             </tr>
           </thead>
@@ -138,6 +155,18 @@ function SummaryCard({ label, value, tone = "default" }: { label: string; value:
 
 function TableHeading({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <th scope="col" className={`border-b border-r border-white/10 px-3 py-3 last:border-r-0 ${className}`}>{children}</th>;
+}
+
+function SortableHeading({ label, sortKey, sort, onSort, className = "", align = "left" }: { label: string; sortKey: MemberSortKey; sort: MemberSort; onSort: (key: MemberSortKey) => void; className?: string; align?: "left" | "right" }) {
+  const active = sort.key === sortKey;
+  return (
+    <th scope="col" aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"} className={`border-b border-r border-white/10 p-0 last:border-r-0 ${className}`}>
+      <button type="button" onClick={() => onSort(sortKey)} className={`flex w-full items-center gap-1 px-3 py-3 hover:bg-white/[0.04] hover:text-white ${align === "right" ? "justify-end" : "justify-start"}`}>
+        <span>{label}</span>
+        <span aria-hidden="true" className={active ? "text-yellow-300" : "text-zinc-600"}>{active ? (sort.direction === "asc" ? "↑" : "↓") : "↕"}</span>
+      </button>
+    </th>
+  );
 }
 
 function TableCell({ children, className = "", title }: { children: React.ReactNode; className?: string; title?: string }) {
