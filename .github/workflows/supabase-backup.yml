@@ -1,0 +1,161 @@
+name: Supabase encrypted backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 18 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Export and encrypt production data
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_ENCRYPTION_PASSWORD: ${{ secrets.BACKUP_ENCRYPTION_PASSWORD }}
+      SUPABASE_PROJECT_URL: https://imkfmynzsnjckdzctwpp.supabase.co
+
+    steps:
+      - name: Check backup secrets
+        shell: bash
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_ENCRYPTION_PASSWORD" ]; then
+            echo "::error::Configure SUPABASE_DB_URL and BACKUP_ENCRYPTION_PASSWORD repository secrets before running backups."
+            exit 1
+          fi
+
+      - name: Install PostgreSQL client
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Export roles, schema and data
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p backup/database backup/storage
+
+          npx --yes supabase@2.111.0 db dump \
+            --db-url "$SUPABASE_DB_URL" \
+            --file backup/database/roles.sql \
+            --role-only
+
+          npx --yes supabase@2.111.0 db dump \
+            --db-url "$SUPABASE_DB_URL" \
+            --file backup/database/schema.sql
+
+          npx --yes supabase@2.111.0 db dump \
+            --db-url "$SUPABASE_DB_URL" \
+            --file backup/database/data.sql \
+            --data-only \
+            --use-copy \
+            --exclude storage.buckets_vectors \
+            --exclude storage.vector_indexes
+
+      - name: Export public Storage objects
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          psql "$SUPABASE_DB_URL" \
+            --no-align \
+            --tuples-only \
+            --field-separator '|' \
+            --command "select bucket_id, name from storage.objects where bucket_id in (select id from storage.buckets where public = true) order by bucket_id, name" \
+            > backup/storage-objects.txt
+
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          from urllib.parse import quote
+          from urllib.request import urlopen
+
+          project_url = os.environ["SUPABASE_PROJECT_URL"].rstrip("/")
+          storage_dir = Path("backup/storage")
+          manifest = []
+
+          with Path("backup/storage-objects.txt").open(
+              encoding="utf-8",
+              newline="",
+          ) as source:
+              for bucket, object_name in csv.reader(source, delimiter="|"):
+                  object_key = f"{bucket}/{object_name}"
+                  encoded_key = "/".join(
+                      quote(part, safe="") for part in object_key.split("/")
+                  )
+                  url = (
+                      f"{project_url}/storage/v1/object/public/{encoded_key}"
+                  )
+                  digest_name = hashlib.sha256(
+                      object_key.encode("utf-8")
+                  ).hexdigest()
+                  target = storage_dir / digest_name
+
+                  with urlopen(url, timeout=30) as response:
+                      content = response.read()
+
+                  target.write_bytes(content)
+                  manifest.append(
+                      {
+                          "bucket": bucket,
+                          "name": object_name,
+                          "backup_file": digest_name,
+                          "bytes": len(content),
+                          "sha256": hashlib.sha256(content).hexdigest(),
+                      }
+                  )
+
+          Path("backup/storage-manifest.json").write_text(
+              json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Build encrypted archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          backup_name="7era-supabase-$(date -u +'%Y%m%dT%H%M%SZ')"
+
+          find backup -type f ! -name SHA256SUMS -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            > backup/SHA256SUMS
+
+          tar -czf "${backup_name}.tar.gz" backup
+
+          openssl enc \
+            -aes-256-cbc \
+            -salt \
+            -pbkdf2 \
+            -iter 200000 \
+            -in "${backup_name}.tar.gz" \
+            -out "${backup_name}.tar.gz.enc" \
+            -pass env:BACKUP_ENCRYPTION_PASSWORD
+
+          sha256sum "${backup_name}.tar.gz.enc" \
+            > "${backup_name}.tar.gz.enc.sha256"
+
+          rm "${backup_name}.tar.gz"
+          echo "BACKUP_NAME=${backup_name}" >> "$GITHUB_ENV"
+
+      - name: Upload encrypted backup
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.BACKUP_NAME }}
+          path: |
+            ${{ env.BACKUP_NAME }}.tar.gz.enc
+            ${{ env.BACKUP_NAME }}.tar.gz.enc.sha256
+          if-no-files-found: error
+          retention-days: 30
