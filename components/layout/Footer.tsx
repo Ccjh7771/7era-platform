@@ -38,7 +38,7 @@ export async function Footer() {
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 py-20">
-        <div className="grid gap-12 md:grid-cols-3">
+        <div className="grid gap-12 md:grid-cols-2 xl:grid-cols-4">
           {/* Brand */}
           <div>
             <h2 className="bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-300 bg-clip-text text-3xl font-black text-transparent">
@@ -151,6 +151,24 @@ export async function Footer() {
               >
                 Email
               </a>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-bold text-white">
+              Legal &amp; Safety
+            </h3>
+
+            <div className="mt-5 flex flex-col gap-3">
+              <Link href="/privacy" className="text-zinc-400 transition hover:text-yellow-300">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-zinc-400 transition hover:text-yellow-300">
+                Terms &amp; Conditions
+              </Link>
+              <Link href="/responsible-gaming" className="text-zinc-400 transition hover:text-yellow-300">
+                Responsible Gaming
+              </Link>
             </div>
           </div>
         </div>
