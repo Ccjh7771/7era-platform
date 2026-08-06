@@ -2,9 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
+import { ChatAttachmentImage } from "@/app/components/chat/ChatAttachmentImage";
 import { createClient } from "@/lib/supabase/client";
 
-import { markMemberConversationRead } from "./actions";
+import { markMemberConversationRead, uploadMemberChatImage } from "./actions";
 
 type Conversation = {
   id: string;
@@ -21,6 +22,8 @@ type Message = {
   sender_type: "member" | "admin" | "system";
   body: string;
   is_internal: boolean;
+  attachment_path: string | null;
+  attachment_mime_type: string | null;
   created_at: string;
 };
 
@@ -43,9 +46,11 @@ export function MemberChat({ memberId, initialConversation, initialMessages }: M
   const [conversation, setConversation] = useState(initialConversation);
   const [messages, setMessages] = useState(initialMessages);
   const [body, setBody] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const messageListRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const supabase = useMemo(() => createClient(), []);
   const conversationId = conversation?.id ?? "";
   const visibleMessages = messages.filter((message) => !message.is_internal);
@@ -79,13 +84,37 @@ export function MemberChat({ memberId, initialConversation, initialMessages }: M
     messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
   }, [visibleMessages.length]);
 
+  function clearPhoto() {
+    setPhoto(null);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  }
+
   async function sendMessage(event: FormEvent) {
     event.preventDefault();
-    if (!body.trim() || busy) return;
+    if ((!body.trim() && !photo) || busy) return;
 
     setBusy(true);
     setError("");
     let targetConversationId = conversationId;
+
+    if (photo) {
+      const formData = new FormData();
+      formData.set("conversationId", targetConversationId);
+      formData.set("body", body);
+      formData.set("photo", photo);
+      const result = await uploadMemberChatImage(formData);
+
+      if (!result.ok) {
+        setError(result.error);
+      } else {
+        setConversation(result.conversation as Conversation);
+        setMessages((current) => current.some((item) => item.id === result.message.id) ? current : [...current, result.message as Message]);
+        setBody("");
+        clearPhoto();
+      }
+      setBusy(false);
+      return;
+    }
 
     if (!targetConversationId) {
       const { data: createdConversation, error: conversationError } = await supabase
@@ -150,7 +179,8 @@ export function MemberChat({ memberId, initialConversation, initialMessages }: M
         {visibleMessages.map((message) => (
           <div key={message.id} className={`flex ${message.sender_type === "member" ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[82%] rounded-2xl px-4 py-3 ${message.sender_type === "member" ? "bg-yellow-400 text-black" : "border border-white/10 bg-white/[0.06] text-white"}`}>
-              <p className="whitespace-pre-wrap text-sm leading-6">{message.body}</p>
+              {message.attachment_path && <ChatAttachmentImage messageId={message.id} />}
+              {message.body && <p className={`${message.attachment_path ? "mt-2" : ""} whitespace-pre-wrap text-sm leading-6`}>{message.body}</p>}
               <p className={`mt-1 flex flex-wrap justify-between gap-x-4 gap-y-1 text-[10px] ${message.sender_type === "member" ? "text-black/50" : "text-zinc-600"}`}>
                 <span>{message.sender_type === "member" ? "You" : "7ERA Support"}</span>
                 <time dateTime={message.created_at}>{malaysiaMessageTime.format(new Date(message.created_at))}</time>
@@ -161,20 +191,45 @@ export function MemberChat({ memberId, initialConversation, initialMessages }: M
       </div>
 
       <form onSubmit={sendMessage} className="border-t border-white/10 p-3 sm:p-5">
+        {photo && (
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs text-yellow-100">
+            <span className="truncate">Photo: {photo.name}</span>
+            <button type="button" onClick={clearPhoto} className="shrink-0 font-black text-yellow-300">Remove</button>
+          </div>
+        )}
         <div className="flex gap-2 sm:gap-3">
+          <label className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-white/10 text-xl text-yellow-300 transition hover:border-yellow-400/40" aria-label="Upload photo">
+            <span aria-hidden="true">＋</span>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              onChange={(event) => {
+                const selectedPhoto = event.target.files?.[0] ?? null;
+                if (selectedPhoto && selectedPhoto.size > 4 * 1024 * 1024) {
+                  setError("Photo must be smaller than 4MB.");
+                  clearPhoto();
+                  return;
+                }
+                setError("");
+                setPhoto(selectedPhoto);
+              }}
+            />
+          </label>
           <textarea
             value={body}
             onChange={(event) => setBody(event.target.value)}
             maxLength={4000}
-            required
-            placeholder="Type your message…"
+            placeholder={photo ? "Add a message (optional)…" : "Type your message…"}
             aria-label="Message"
             className="min-h-12 flex-1 resize-none rounded-2xl border border-white/10 bg-black/60 px-4 py-3 outline-none focus:border-yellow-400/40"
           />
-          <button disabled={busy} className="rounded-2xl bg-yellow-400 px-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-50 sm:px-6">
+          <button disabled={busy || (!body.trim() && !photo)} className="rounded-2xl bg-yellow-400 px-4 font-black text-black disabled:cursor-not-allowed disabled:opacity-50 sm:px-6">
             {busy ? "Sending…" : "Send"}
           </button>
         </div>
+        <p className="mt-2 text-[11px] text-zinc-600">JPG, PNG, WebP or GIF · maximum 4MB</p>
         {error && <p role="alert" className="mt-2 text-sm text-red-300">{error}</p>}
       </form>
     </div>

@@ -16,7 +16,7 @@ export default async function MemberChatPage() {
   const messagesResult = conversation
     ? await supabase
         .from("chat_messages")
-        .select("id, conversation_id, sender_id, sender_type, body, is_internal, created_at")
+        .select("id, conversation_id, sender_id, sender_type, body, is_internal, attachment_path, attachment_mime_type, created_at")
         .eq("conversation_id", conversation.id)
         .order("created_at")
     : { data: [] };

@@ -24,7 +24,7 @@ export default async function AdminLiveChatPage({ searchParams }: AdminLiveChatP
     return { id: conversation.id, member_id: conversation.member_id, subject: conversation.subject, status: conversation.status, assigned_admin_id: conversation.assigned_admin_id, last_message_at: conversation.last_message_at, admin_last_read_at: conversation.admin_last_read_at, memberName: member?.full_name ?? "Member", memberPhone: member?.phone ? displayMalaysianPhone(member.phone) : "" };
   });
   const ids = conversations.map((conversation) => conversation.id);
-  const messagesResult = ids.length ? await client.from("chat_messages").select("id, conversation_id, sender_id, sender_type, body, is_internal, created_at").in("conversation_id", ids).order("created_at").limit(2000) : { data: [] };
+  const messagesResult = ids.length ? await client.from("chat_messages").select("id, conversation_id, sender_id, sender_type, body, is_internal, attachment_path, attachment_mime_type, created_at").in("conversation_id", ids).order("created_at").limit(2000) : { data: [] };
   const staff = (staffResult.data ?? []).map((person) => ({ id: person.id, fullName: person.full_name }));
   const requestedMember = requestedMemberResult.data
     ? { id: requestedMemberResult.data.id, name: requestedMemberResult.data.full_name, phone: displayMalaysianPhone(requestedMemberResult.data.phone) }
