@@ -146,7 +146,9 @@ export function MemberChat({ memberId, initialConversation, initialMessages }: M
       .single();
 
     if (sendError) {
-      setError("Unable to send your message. Please try again.");
+      setError(sendError.message.includes("chat_message_rate_limit")
+        ? "Messages are being sent too quickly. Please wait a moment."
+        : "Unable to send your message. Please try again.");
     } else {
       setBody("");
       setMessages((current) => current.some((item) => item.id === message.id) ? current : [...current, message as Message]);

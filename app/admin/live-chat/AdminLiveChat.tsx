@@ -199,7 +199,11 @@ export function AdminLiveChat({ adminId, canReply, initialConversations, initial
       .insert({ conversation_id: selectedId, sender_id: adminId, sender_type: "admin", body: body.trim(), is_internal: internal })
       .select("*")
       .single();
-    if (sendError) setError("Message could not be sent.");
+    if (sendError) {
+      setError(sendError.message.includes("chat_message_rate_limit")
+        ? "Messages are being sent too quickly. Please wait a moment."
+        : "Message could not be sent.");
+    }
     else {
       setBody("");
       setInternal(false);

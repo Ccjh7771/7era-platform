@@ -92,6 +92,12 @@ export async function storeChatImageMessage(input: {
 
   if (messageError || !message) {
     await adminClient.storage.from("chat-attachments").remove([attachmentPath]);
+    if (messageError?.message.includes("chat_photo_rate_limit")) {
+      throw new Error("Too many photos were sent. Please wait before sending another photo.");
+    }
+    if (messageError?.message.includes("chat_message_rate_limit")) {
+      throw new Error("Messages are being sent too quickly. Please wait a moment.");
+    }
     throw new Error("Photo message could not be sent.");
   }
 
