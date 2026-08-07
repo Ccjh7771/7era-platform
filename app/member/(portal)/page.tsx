@@ -5,6 +5,7 @@ import { isWithinCampaignWindow, malaysiaDateString } from "@/lib/member/time";
 import { createClient } from "@/lib/supabase/server";
 
 import { DailyClaimButton } from "./DailyClaimButton";
+import { MemberPointsValue } from "./MemberPointsBadge";
 
 export default async function MemberDashboardPage() {
   const member = await requireMember();
@@ -40,7 +41,9 @@ export default async function MemberDashboardPage() {
         </div>
         <div className="rounded-2xl border border-yellow-400/20 bg-yellow-400/10 px-6 py-4">
           <p className="text-xs uppercase tracking-wider text-yellow-200/70">Points balance</p>
-          <p className="mt-1 text-3xl font-black text-yellow-300">{member.pointsBalance.toLocaleString()}</p>
+          <p className="mt-1 text-3xl font-black text-yellow-300">
+            <MemberPointsValue initialBalance={member.pointsBalance} />
+          </p>
         </div>
       </div>
 

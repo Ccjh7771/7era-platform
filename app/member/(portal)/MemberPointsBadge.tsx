@@ -9,7 +9,7 @@ export type MemberPointsUpdate = {
   spinsRemaining: number;
 };
 
-export function MemberPointsBadge({ initialBalance }: { initialBalance: number }) {
+function useMemberPointsBalance(initialBalance: number) {
   const [balance, setBalance] = useState(initialBalance);
 
   useEffect(() => {
@@ -22,9 +22,21 @@ export function MemberPointsBadge({ initialBalance }: { initialBalance: number }
     return () => window.removeEventListener(MEMBER_POINTS_UPDATED_EVENT, updateBalance);
   }, []);
 
+  return balance;
+}
+
+export function MemberPointsBadge({ initialBalance }: { initialBalance: number }) {
+  const balance = useMemberPointsBalance(initialBalance);
+
   return (
     <span className="shrink-0 rounded-full border border-yellow-400/20 bg-yellow-400/10 px-3 py-2 text-xs font-black text-yellow-300 sm:px-4 sm:text-sm">
       {balance.toLocaleString()} PTS
     </span>
   );
+}
+
+export function MemberPointsValue({ initialBalance }: { initialBalance: number }) {
+  const balance = useMemberPointsBalance(initialBalance);
+
+  return <>{balance.toLocaleString()}</>;
 }
