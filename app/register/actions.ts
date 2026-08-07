@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidMemberPassword } from "@/lib/member/password";
+import { checkMemberRegistrationRateLimit } from "@/lib/member/registration-rate-limit";
 import {
   displayMalaysianPhone,
   memberEmailForPhone,
@@ -43,6 +44,14 @@ export async function registerMember(
     return {
       status: "error",
       message: "Enter the same password in both fields. Use at least 6 characters.",
+    };
+  }
+
+  const registrationLimit = await checkMemberRegistrationRateLimit();
+  if (!registrationLimit.allowed) {
+    return {
+      status: "error",
+      message: "Too many registration attempts. Please try again in one hour.",
     };
   }
 
