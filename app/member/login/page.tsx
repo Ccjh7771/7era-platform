@@ -9,9 +9,11 @@ export default async function MemberLoginPage({ searchParams }: LoginPageProps) 
   const error = Array.isArray(params.error) ? params.error[0] : params.error;
   const errorMessage = error === "inactive"
     ? "This member account is suspended. Please contact support."
-    : error
-      ? "Invalid mobile number or password."
-      : "";
+    : error === "rate-limit"
+      ? "Too many failed attempts. Please wait 15 minutes before trying again."
+      : error
+        ? "Invalid mobile number or password."
+        : "";
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 py-16 text-white">

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { checkLoginRateLimit } from "@/lib/auth/login-rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -23,7 +24,8 @@ export async function loginAdmin(
 
     if (
         !usernamePattern.test(username) ||
-        password.length < 6
+        password.length < 6 ||
+        password.length > 72
     ) {
         console.error(
             "Admin login failed: invalid input format.",
@@ -31,6 +33,15 @@ export async function loginAdmin(
 
         redirect(
             "/auth/login?error=invalid",
+        );
+    }
+
+    const rateLimit =
+        await checkLoginRateLimit("admin");
+
+    if (!rateLimit.allowed) {
+        redirect(
+            "/auth/login?error=rate-limit",
         );
     }
 
@@ -60,6 +71,7 @@ export async function loginAdmin(
     }
 
     if (!profile || !profile.is_active) {
+        await rateLimit.recordFailure();
         console.error(
             "Admin profile is missing or inactive.",
         );
@@ -78,6 +90,7 @@ export async function loginAdmin(
         });
 
     if (signInError) {
+        await rateLimit.recordFailure();
         console.error(
             "Admin sign-in failed:",
             signInError.message,
@@ -87,6 +100,8 @@ export async function loginAdmin(
             "/auth/login?error=invalid",
         );
     }
+
+    await rateLimit.clearFailures();
 
     const { error: updateError } =
         await adminClient

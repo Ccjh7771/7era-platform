@@ -11,6 +11,8 @@ type AdminLoginPageProps = {
 const errorMessages: Record<string, string> = {
   invalid:
     "Invalid username or password. Please try again.",
+  "rate-limit":
+    "Too many failed attempts. Please wait 15 minutes before trying again.",
   unauthorized:
     "This account is not authorized to access the admin area.",
 };
@@ -97,6 +99,7 @@ export default async function AdminLoginPage({
               autoComplete="current-password"
               required
               minLength={6}
+              maxLength={72}
               className="mt-3 h-14 w-full rounded-2xl border border-white/10 bg-black/50 px-5 text-white outline-none transition placeholder:text-zinc-600 focus:border-yellow-400/50 focus:ring-2 focus:ring-yellow-400/10"
               placeholder="Enter your password"
             />

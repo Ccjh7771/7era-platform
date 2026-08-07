@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { checkLoginRateLimit } from "@/lib/auth/login-rate-limit";
 import { memberEmailForPhone, normalizeMalaysianPhone } from "@/lib/member/phone";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +15,11 @@ export async function loginMember(formData: FormData) {
     redirect("/member/login?error=invalid");
   }
 
+  const rateLimit = await checkLoginRateLimit("member");
+  if (!rateLimit.allowed) {
+    redirect("/member/login?error=rate-limit");
+  }
+
   const supabase = await createClient();
   const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
     email: memberEmailForPhone(phone),
@@ -21,8 +27,11 @@ export async function loginMember(formData: FormData) {
   });
 
   if (signInError || !signInData.user) {
+    await rateLimit.recordFailure();
     redirect("/member/login?error=invalid");
   }
+
+  await rateLimit.clearFailures();
 
   const { data: profile, error: profileError } = await supabase
     .from("member_profiles")
