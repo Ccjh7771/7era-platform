@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { requireMember } from "@/lib/member/access";
-import { malaysiaDateString } from "@/lib/member/time";
+import { isWithinCampaignWindow, malaysiaDateString } from "@/lib/member/time";
 import { createClient } from "@/lib/supabase/server";
 
 import { LuckyWheel } from "./LuckyWheel";
@@ -12,7 +12,7 @@ export default async function LuckySpinPage() {
   const today = malaysiaDateString();
   const { data: campaign } = await supabase.from("spin_campaigns").select("id, name, points_per_spin, daily_limit, starts_at, ends_at, is_active, primary_color, secondary_color, background_color, logo_path, background_image_path").eq("is_active", true).maybeSingle();
 
-  if (!campaign) {
+  if (!campaign || !isWithinCampaignWindow(campaign.starts_at, campaign.ends_at)) {
     return <section className="mx-auto max-w-2xl py-20 text-center"><p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-300">Lucky Spin</p><h1 className="mt-4 text-4xl font-black">The wheel is currently closed</h1><p className="mt-4 text-zinc-500">Please return when the next campaign begins.</p></section>;
   }
 

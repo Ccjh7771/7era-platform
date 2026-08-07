@@ -50,8 +50,14 @@ export async function updateClaimStatus(formData: FormData) {
   const status = String(formData.get("status") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(claimId) || !["fulfilled", "cancelled", "pending"].includes(status)) redirect("/admin/daily-rewards?error=invalid");
   const client = createAdminClient();
-  const { error } = await client.from("reward_claims").update({ status, fulfilled_by: status === "fulfilled" ? admin.id : null, fulfilled_at: status === "fulfilled" ? new Date().toISOString() : null }).eq("id", claimId);
-  if (error) redirect("/admin/daily-rewards?error=server");
+  const { data, error } = await client
+    .from("reward_claims")
+    .update({ status, fulfilled_by: status === "fulfilled" ? admin.id : null, fulfilled_at: status === "fulfilled" ? new Date().toISOString() : null })
+    .eq("id", claimId)
+    .eq("source_type", "daily_reward")
+    .select("id")
+    .maybeSingle();
+  if (error || !data) redirect("/admin/daily-rewards?error=server");
   revalidatePath("/admin/daily-rewards"); revalidatePath("/admin/lucky-spin"); revalidatePath("/member/rewards");
   redirect("/admin/daily-rewards?success=claim");
 }

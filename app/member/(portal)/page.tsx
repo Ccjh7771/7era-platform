@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { requireMember } from "@/lib/member/access";
-import { malaysiaDateString } from "@/lib/member/time";
+import { isWithinCampaignWindow, malaysiaDateString } from "@/lib/member/time";
 import { createClient } from "@/lib/supabase/server";
 
 import { DailyClaimButton } from "./DailyClaimButton";
@@ -16,7 +16,7 @@ export default async function MemberDashboardPage() {
     supabase.from("daily_reward_items").select("id, day_number, label, description, points_amount, reward_type, is_active").order("day_number"),
     supabase.from("daily_reward_claims").select("id", { count: "exact", head: true }).eq("member_id", member.id),
     supabase.from("daily_reward_claims").select("id").eq("member_id", member.id).eq("claim_date", today).maybeSingle(),
-    supabase.from("spin_campaigns").select("id, name, is_active, points_per_spin, daily_limit").eq("is_active", true).maybeSingle(),
+    supabase.from("spin_campaigns").select("id, name, is_active, points_per_spin, daily_limit, starts_at, ends_at").eq("is_active", true).maybeSingle(),
   ]);
 
   const settings = settingsResult.data;
@@ -25,7 +25,10 @@ export default async function MemberDashboardPage() {
   const cycleLength = settings?.cycle_length ?? 7;
   const nextDay = (claimCount % cycleLength) + 1;
   const claimedToday = Boolean(todayClaimResult.data);
-  const campaign = campaignResult.data;
+  const configuredCampaign = campaignResult.data;
+  const campaign = configuredCampaign && isWithinCampaignWindow(configuredCampaign.starts_at, configuredCampaign.ends_at)
+    ? configuredCampaign
+    : null;
 
   return (
     <section>
@@ -70,7 +73,7 @@ export default async function MemberDashboardPage() {
         <article className="relative overflow-hidden rounded-[28px] border border-yellow-400/20 bg-gradient-to-br from-yellow-400/15 via-amber-500/5 to-black p-6 sm:p-8">
           <p className="text-xs font-black uppercase tracking-[0.25em] text-yellow-300">Lucky Spin</p>
           <h2 className="mt-3 text-2xl font-black">{campaign?.name ?? "Coming soon"}</h2>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">{campaign ? `${campaign.points_per_spin} points per spin · Up to ${campaign.daily_limit} spins daily.` : "The wheel will open when an administrator activates a campaign."}</p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">{campaign ? `${campaign.points_per_spin} points per spin · Up to ${campaign.daily_limit} spins daily.` : "The wheel will open during the campaign period set by an administrator."}</p>
           <Link href="/member/lucky-spin" className="mt-7 inline-flex h-12 items-center justify-center rounded-2xl border border-yellow-400/30 bg-yellow-400 px-6 text-sm font-black text-black">Open Lucky Spin</Link>
         </article>
       </div>

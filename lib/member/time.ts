@@ -19,3 +19,18 @@ export function formatMalaysiaDateTime(value: string) {
     timeStyle: "short",
   }).format(new Date(value));
 }
+
+export function isWithinCampaignWindow(
+  startsAt: string | null,
+  endsAt: string | null,
+  now = new Date(),
+) {
+  const currentTime = now.getTime();
+  const startTime = startsAt ? new Date(startsAt).getTime() : null;
+  const endTime = endsAt ? new Date(endsAt).getTime() : null;
+
+  return (
+    (startTime === null || startTime <= currentTime) &&
+    (endTime === null || endTime >= currentTime)
+  );
+}
