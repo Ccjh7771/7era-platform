@@ -23,7 +23,7 @@ export async function checkMemberRegistrationRateLimit() {
     return { allowed: true };
   }
 
-  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = process.env.SUPABASE_SECRET_KEY;
   if (!secret) {
     console.error("Registration rate limit is missing its server-side hash secret.");
     return { allowed: true };
