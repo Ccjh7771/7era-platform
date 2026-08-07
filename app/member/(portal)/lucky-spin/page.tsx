@@ -33,7 +33,7 @@ export default async function LuckySpinPage() {
         <p className="mt-4 text-zinc-400">{campaign.points_per_spin} points per spin · {campaign.daily_limit - spinsToday} of {campaign.daily_limit} spins remaining today</p>
       </div>
       <div className="rounded-[32px] border border-yellow-400/15 bg-black/70 bg-cover bg-center bg-blend-overlay p-5 shadow-2xl sm:p-8" style={campaign.background_image_path ? { backgroundImage: `url("${campaign.background_image_path}")` } : undefined}>
-        <LuckyWheel prizes={prizes} canSpin={canSpin} />
+        <LuckyWheel prizes={prizes} canSpin={canSpin} pointsPerSpin={campaign.points_per_spin} />
       </div>
       {!canSpin && <p className="mt-5 text-center text-sm text-amber-200">You need enough points and an available daily spin to continue.</p>}
     </section>

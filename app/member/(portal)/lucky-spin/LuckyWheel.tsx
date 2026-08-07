@@ -2,8 +2,8 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 
+import { MEMBER_POINTS_UPDATED_EVENT } from "../MemberPointsBadge";
 import { spinLuckyWheel, type SpinState } from "./actions";
 
 const initialSpinState: SpinState = { status: "idle", message: "" };
@@ -12,11 +12,12 @@ type WheelPrize = { id: string; name: string; imagePath: string | null; isThankY
 
 const palette = ["#facc15", "#f59e0b", "#111827", "#d97706", "#27272a", "#eab308"];
 
-export function LuckyWheel({ prizes, canSpin }: { prizes: WheelPrize[]; canSpin: boolean }) {
+export function LuckyWheel({ prizes, canSpin, pointsPerSpin }: { prizes: WheelPrize[]; canSpin: boolean; pointsPerSpin: number }) {
   const [state, action, pending] = useActionState(spinLuckyWheel, initialSpinState);
   const [rotation, setRotation] = useState(0);
   const [showResult, setShowResult] = useState(false);
-  const router = useRouter();
+  const [animating, setAnimating] = useState(false);
+  const [canContinue, setCanContinue] = useState(canSpin);
 
   const gradient = useMemo(() => {
     const slice = 360 / Math.max(prizes.length, 1);
@@ -29,20 +30,26 @@ export function LuckyWheel({ prizes, canSpin }: { prizes: WheelPrize[]; canSpin:
     const slice = 360 / prizes.length;
     const target = 360 - (Math.max(index, 0) * slice + slice / 2);
     const startTimer = window.setTimeout(() => {
+      setAnimating(true);
       setShowResult(false);
       setRotation((current) => current + 1800 + target - (current % 360));
     }, 0);
     const resultTimer = window.setTimeout(() => {
       setShowResult(true);
-      router.refresh();
+      setAnimating(false);
+      setCanContinue(
+        Number(state.spinsRemaining ?? 0) > 0 &&
+        Number(state.balance ?? 0) >= pointsPerSpin,
+      );
+      window.dispatchEvent(new CustomEvent(MEMBER_POINTS_UPDATED_EVENT, { detail: Number(state.balance ?? 0) }));
     }, 4200);
     return () => {
       window.clearTimeout(startTimer);
       window.clearTimeout(resultTimer);
     };
-  }, [prizes, router, state.prizeId, state.resultId, state.status]);
+  }, [pointsPerSpin, prizes, state.balance, state.prizeId, state.resultId, state.spinsRemaining, state.status]);
 
-  const disabled = !canSpin || prizes.length < 2 || pending;
+  const disabled = !canContinue || prizes.length < 2 || pending || animating;
 
   return (
     <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,.9fr)]">
@@ -80,11 +87,11 @@ export function LuckyWheel({ prizes, canSpin }: { prizes: WheelPrize[]; canSpin:
         </div>
         <form action={action} className="mt-7">
           <button disabled={disabled} className="h-14 w-full rounded-2xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 text-base font-black text-black shadow-[0_0_35px_rgba(250,204,21,.22)] disabled:cursor-not-allowed disabled:bg-none disabled:bg-zinc-700 disabled:text-zinc-400">
-            {pending ? "Spinning…" : "Spin now"}
+            {pending || animating ? "Spinning…" : "Spin now"}
           </button>
         </form>
         {state.status === "error" && <p role="alert" className="mt-4 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{state.message}</p>}
-        {state.status === "success" && showResult && <div className={`mt-4 rounded-2xl border p-5 ${state.isWinner ? "border-emerald-400/30 bg-emerald-400/10" : "border-white/10 bg-white/[0.04]"}`}><p className="text-lg font-black">{state.message}</p>{state.claimCode && <p className="mt-2 font-mono text-sm text-emerald-300">Claim code: {state.claimCode}</p>}<p className="mt-2 text-xs text-zinc-500">{state.spinsRemaining} spin(s) remaining today · Balance {state.balance} points</p></div>}
+        {state.status === "success" && showResult && <div role="status" className={`mt-4 rounded-2xl border p-5 ${state.isWinner ? "border-emerald-400/30 bg-emerald-400/10" : "border-white/10 bg-white/[0.04]"}`}><p className="text-lg font-black">{state.message}</p>{state.claimCode && <p className="mt-2 font-mono text-sm text-emerald-300">Claim code: {state.claimCode}</p>}<p className="mt-2 text-xs text-zinc-500">{state.spinsRemaining} spin(s) remaining today · Balance {state.balance} points</p></div>}
       </div>
     </div>
   );
