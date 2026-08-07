@@ -41,7 +41,12 @@ export function LuckyWheel({ prizes, canSpin, pointsPerSpin }: { prizes: WheelPr
         Number(state.spinsRemaining ?? 0) > 0 &&
         Number(state.balance ?? 0) >= pointsPerSpin,
       );
-      window.dispatchEvent(new CustomEvent(MEMBER_POINTS_UPDATED_EVENT, { detail: Number(state.balance ?? 0) }));
+      window.dispatchEvent(new CustomEvent(MEMBER_POINTS_UPDATED_EVENT, {
+        detail: {
+          balance: Number(state.balance ?? 0),
+          spinsRemaining: Number(state.spinsRemaining ?? 0),
+        },
+      }));
     }, 4200);
     return () => {
       window.clearTimeout(startTimer);

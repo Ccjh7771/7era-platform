@@ -5,6 +5,7 @@ import { isWithinCampaignWindow, malaysiaDateString } from "@/lib/member/time";
 import { createClient } from "@/lib/supabase/server";
 
 import { LuckyWheel } from "./LuckyWheel";
+import { LuckySpinSummary } from "./LuckySpinSummary";
 
 export default async function LuckySpinPage() {
   const member = await requireMember();
@@ -30,7 +31,7 @@ export default async function LuckySpinPage() {
         {campaign.logo_path && <Image src={campaign.logo_path} alt={`${campaign.name} logo`} width={360} height={110} className="mx-auto h-auto w-full max-w-sm" priority />}
         <p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-300">7ERA Member Rewards</p>
         <h1 className="mt-3 text-4xl font-black sm:text-5xl">{campaign.name}</h1>
-        <p className="mt-4 text-zinc-400">{campaign.points_per_spin} points per spin · {campaign.daily_limit - spinsToday} of {campaign.daily_limit} spins remaining today</p>
+        <LuckySpinSummary pointsPerSpin={campaign.points_per_spin} initialSpinsRemaining={campaign.daily_limit - spinsToday} dailyLimit={campaign.daily_limit} />
       </div>
       <div className="rounded-[32px] border border-yellow-400/15 bg-black/70 bg-cover bg-center bg-blend-overlay p-5 shadow-2xl sm:p-8" style={campaign.background_image_path ? { backgroundImage: `url("${campaign.background_image_path}")` } : undefined}>
         <LuckyWheel prizes={prizes} canSpin={canSpin} pointsPerSpin={campaign.points_per_spin} />

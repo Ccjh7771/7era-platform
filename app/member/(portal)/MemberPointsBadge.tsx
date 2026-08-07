@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 
 export const MEMBER_POINTS_UPDATED_EVENT = "7era:member-points-updated";
 
+export type MemberPointsUpdate = {
+  balance: number;
+  spinsRemaining: number;
+};
+
 export function MemberPointsBadge({ initialBalance }: { initialBalance: number }) {
   const [balance, setBalance] = useState(initialBalance);
 
   useEffect(() => {
     const updateBalance = (event: Event) => {
-      const nextBalance = (event as CustomEvent<number>).detail;
+      const nextBalance = (event as CustomEvent<MemberPointsUpdate>).detail.balance;
       if (Number.isFinite(nextBalance)) setBalance(nextBalance);
     };
 
