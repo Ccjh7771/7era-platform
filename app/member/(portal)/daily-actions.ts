@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export type DailyClaimState = {
   status: "idle" | "success" | "error";
   message: string;
+  balance?: number;
 };
 
 export async function claimDailyReward(
@@ -23,12 +24,21 @@ export async function claimDailyReward(
     return { status: "error", message: knownMessage };
   }
 
-  const result = data as { label?: string; pointsAwarded?: number; claimCode?: string | null };
+  const result = data as {
+    label?: string;
+    pointsAwarded?: number;
+    balance?: number;
+    claimCode?: string | null;
+  };
   const details = result.pointsAwarded
     ? ` You received ${result.pointsAwarded} points.`
     : result.claimCode
       ? ` Claim code: ${result.claimCode}.`
       : "";
 
-  return { status: "success", message: `${result.label ?? "Reward claimed"}.${details}` };
+  return {
+    status: "success",
+    message: `${result.label ?? "Reward claimed"}.${details}`,
+    balance: Number(result.balance ?? 0),
+  };
 }
