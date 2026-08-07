@@ -5,9 +5,11 @@
 - Supabase project: `imkfmynzsnjckdzctwpp`
 - Region: Singapore (`ap-southeast-1`)
 - Plan: Free
-- Automated daily backups: unavailable on the Free Plan
-- Schema recovery: 31 migration files are committed under `supabase/migrations`
+- User-accessible scheduled restores: not included on the Free Plan
+- Supabase may retain limited daily backups that become accessible after an upgrade, but this is not guaranteed protection for a Free project
+- Schema recovery: 35 migration files are committed under `supabase/migrations`
 - Storage objects must be backed up separately from the Postgres database
+- Operational decision: treat the weekly off-site export below as the recoverable production backup
 
 ## Weekly backup
 
@@ -20,7 +22,7 @@
    ```
 
 4. Paste the connection string only into the secure prompt. Do not save it in a file or Git.
-5. In Supabase Dashboard, copy the project URL and service role key, then run:
+5. In Supabase Dashboard, copy the project URL and a server-side Secret key (a legacy `service_role` key also works), then run:
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts\backup-supabase-storage.ps1
@@ -57,4 +59,4 @@ Restore into a new Supabase project first. Do not overwrite production until the
 
 ## Paid protection option
 
-Pro projects receive seven days of daily backups. Point-in-Time Recovery is a separate paid add-on and requires at least Small compute. Upgrade only when losing up to one day of member activity is no longer acceptable.
+Pro projects receive seven days of user-accessible daily backups. Point-in-Time Recovery is a separate paid add-on and requires at least Small compute. Upgrade when losing up to one day of member activity is no longer acceptable.

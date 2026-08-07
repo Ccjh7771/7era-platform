@@ -6,13 +6,13 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $storageOutput = Join-Path $repoRoot "backups\$timestamp\storage"
 
 $projectUrl = Read-Host "Supabase project URL (https://PROJECT.supabase.co)"
-$secureServiceKey = Read-Host "Supabase service role key" -AsSecureString
+$secureServiceKey = Read-Host "Supabase server Secret key (or legacy service_role key)" -AsSecureString
 $serviceKeyPointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureServiceKey)
 
 try {
   $serviceKey = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($serviceKeyPointer)
   if ([string]::IsNullOrWhiteSpace($projectUrl) -or [string]::IsNullOrWhiteSpace($serviceKey)) {
-    throw "Project URL and service role key are required."
+    throw "Project URL and server Secret key are required."
   }
 
   $env:SUPABASE_BACKUP_URL = $projectUrl
