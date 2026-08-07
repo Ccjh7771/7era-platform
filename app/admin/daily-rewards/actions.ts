@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireContentEditor } from "@/lib/admin/access";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { uploadEngagementImage } from "@/lib/admin/engagement-image";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -18,12 +19,20 @@ export async function updateDailyRewardSettings(formData: FormData) {
   const client = createAdminClient();
   const { error } = await client.from("daily_reward_settings").update({ title, subtitle, cycle_length: cycleLength, is_enabled: formData.get("isEnabled") === "on", updated_by: admin.id, updated_at: new Date().toISOString() }).eq("id", 1);
   if (error) redirect("/admin/daily-rewards?error=server");
+  await recordAdminAudit({
+    actor: admin,
+    action: "daily_reward_settings_updated",
+    targetType: "daily_reward",
+    targetId: "settings",
+    summary: `Updated the ${cycleLength}-day reward cycle settings.`,
+    metadata: { cycleLength, enabled: formData.get("isEnabled") === "on" },
+  });
   revalidatePath("/member"); revalidatePath("/admin/daily-rewards");
   redirect("/admin/daily-rewards?success=settings");
 }
 
 export async function saveDailyRewardItem(formData: FormData) {
-  await requireContentEditor("/admin/daily-rewards?error=forbidden");
+  const admin = await requireContentEditor("/admin/daily-rewards?error=forbidden");
   const itemId = String(formData.get("itemId") ?? "");
   const dayNumber = Number(formData.get("dayNumber"));
   const rewardType = String(formData.get("rewardType") ?? "");
@@ -40,6 +49,14 @@ export async function saveDailyRewardItem(formData: FormData) {
   const operation = itemId ? client.from("daily_reward_items").update(payload).eq("id", itemId) : client.from("daily_reward_items").insert(payload);
   const { error } = await operation;
   if (error) { console.error("Daily item update failed:", error.message); redirect("/admin/daily-rewards?error=server"); }
+  await recordAdminAudit({
+    actor: admin,
+    action: itemId ? "daily_reward_item_updated" : "daily_reward_item_created",
+    targetType: "daily_reward_item",
+    targetId: itemId || `day-${dayNumber}`,
+    summary: `${itemId ? "Updated" : "Created"} Day ${dayNumber} reward: ${label}.`,
+    metadata: { dayNumber, rewardType, pointsAmount },
+  });
   revalidatePath("/member"); revalidatePath("/admin/daily-rewards");
   redirect("/admin/daily-rewards?success=item");
 }
@@ -58,6 +75,14 @@ export async function updateClaimStatus(formData: FormData) {
     .select("id")
     .maybeSingle();
   if (error || !data) redirect("/admin/daily-rewards?error=server");
+  await recordAdminAudit({
+    actor: admin,
+    action: "daily_reward_claim_status_changed",
+    targetType: "reward_claim",
+    targetId: claimId,
+    summary: `Changed a Daily Reward claim to ${status}.`,
+    metadata: { status },
+  });
   revalidatePath("/admin/daily-rewards"); revalidatePath("/admin/lucky-spin"); revalidatePath("/member/rewards");
   redirect("/admin/daily-rewards?success=claim");
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireContentEditor } from "@/lib/admin/access";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { uploadEngagementImage } from "@/lib/admin/engagement-image";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -37,6 +38,14 @@ export async function updateSpinCampaign(formData: FormData) {
   if (upload.error) redirect(`/admin/lucky-spin?error=${upload.error}`);
   const { error } = await client.from("spin_campaigns").update({ name, points_per_spin: pointsPerSpin, daily_limit: dailyLimit, starts_at: startsAt, ends_at: endsAt, is_active: isActive, updated_by: admin.id, updated_at: new Date().toISOString(), ...(upload.url ? { background_image_path: upload.url } : {}) }).eq("id", campaignId);
   if (error) { console.error("Spin campaign update failed:", error.message); redirect("/admin/lucky-spin?error=server"); }
+  await recordAdminAudit({
+    actor: admin,
+    action: "spin_campaign_updated",
+    targetType: "spin_campaign",
+    targetId: campaignId,
+    summary: `Updated Lucky Spin campaign ${name}.`,
+    metadata: { pointsPerSpin, dailyLimit, enabled: isActive },
+  });
   refreshSpinPages(); redirect("/admin/lucky-spin?success=campaign");
 }
 
@@ -49,11 +58,18 @@ export async function uploadSpinLogo(formData: FormData) {
   const client = createAdminClient();
   const { error } = await client.from("spin_campaigns").update({ logo_path: upload.url, updated_by: admin.id, updated_at: new Date().toISOString() }).eq("id", campaignId);
   if (error) redirect("/admin/lucky-spin?error=server");
+  await recordAdminAudit({
+    actor: admin,
+    action: "spin_logo_updated",
+    targetType: "spin_campaign",
+    targetId: campaignId,
+    summary: "Updated the Lucky Spin logo.",
+  });
   refreshSpinPages(); redirect("/admin/lucky-spin?success=logo");
 }
 
 export async function saveSpinPrize(formData: FormData) {
-  await requireContentEditor("/admin/lucky-spin?error=forbidden");
+  const admin = await requireContentEditor("/admin/lucky-spin?error=forbidden");
   const prizeId = String(formData.get("prizeId") ?? "");
   const campaignId = String(formData.get("campaignId") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -70,11 +86,19 @@ export async function saveSpinPrize(formData: FormData) {
   const operation = prizeId ? client.from("spin_prizes").update(payload).eq("id", prizeId) : client.from("spin_prizes").insert(payload);
   const { error } = await operation;
   if (error) { console.error("Spin prize save failed:", error.message); redirect(`/admin/lucky-spin?error=${error.code === "23505" ? "duplicate_thank_you" : "server"}`); }
+  await recordAdminAudit({
+    actor: admin,
+    action: prizeId ? "spin_prize_updated" : "spin_prize_created",
+    targetType: "spin_prize",
+    targetId: prizeId || campaignId,
+    summary: `${prizeId ? "Updated" : "Created"} Lucky Spin prize: ${name}.`,
+    metadata: { weight, position, thankYou },
+  });
   refreshSpinPages(); redirect("/admin/lucky-spin?success=prize");
 }
 
 export async function setSpinPrizeStatus(formData: FormData) {
-  await requireContentEditor("/admin/lucky-spin?error=forbidden");
+  const admin = await requireContentEditor("/admin/lucky-spin?error=forbidden");
   const prizeId = String(formData.get("prizeId") ?? "");
   const requestedValues = formData.getAll("isActive");
   const isActive = String(requestedValues.at(-1) ?? "") === "true";
@@ -82,6 +106,14 @@ export async function setSpinPrizeStatus(formData: FormData) {
   const client = createAdminClient();
   const { error } = await client.from("spin_prizes").update({ is_active: isActive, updated_at: new Date().toISOString() }).eq("id", prizeId);
   if (error) redirect("/admin/lucky-spin?error=server");
+  await recordAdminAudit({
+    actor: admin,
+    action: "spin_prize_status_changed",
+    targetType: "spin_prize",
+    targetId: prizeId,
+    summary: `${isActive ? "Enabled" : "Disabled"} a Lucky Spin prize.`,
+    metadata: { enabled: isActive },
+  });
   refreshSpinPages(); redirect("/admin/lucky-spin?success=prize_status");
 }
 
@@ -104,6 +136,14 @@ export async function updateSpinClaimStatus(formData: FormData) {
     .maybeSingle();
 
   if (error || !data) redirect("/admin/lucky-spin?error=claim_update");
+  await recordAdminAudit({
+    actor: admin,
+    action: "spin_claim_status_changed",
+    targetType: "reward_claim",
+    targetId: claimId,
+    summary: `Changed a Lucky Spin claim to ${status}.`,
+    metadata: { status },
+  });
   revalidatePath("/admin/lucky-spin");
   revalidatePath("/admin/daily-rewards");
   revalidatePath("/member/rewards");

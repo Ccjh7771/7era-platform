@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireOwner } from "@/lib/admin/access";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const usernamePattern =
@@ -61,7 +62,7 @@ export async function createAdminAccount(
         );
     }
 
-    await requireOwner();
+    const currentAdmin = await requireOwner();
 
     const adminClient =
         createAdminClient();
@@ -167,6 +168,15 @@ export async function createAdminAccount(
         );
     }
 
+    await recordAdminAudit({
+        actor: currentAdmin,
+        action: "admin_account_created",
+        targetType: "admin_account",
+        targetId: createdUser.id,
+        summary: `Created staff account ${fullName} with ${role} access.`,
+        metadata: { role },
+    });
+
     revalidatePath("/admin/accounts");
 
     redirect(
@@ -263,6 +273,14 @@ export async function resetAdminPassword(
         );
     }
 
+    await recordAdminAudit({
+        actor: currentAdmin,
+        action: "admin_password_reset",
+        targetType: "admin_account",
+        targetId: targetUserId,
+        summary: "Reset a staff password. Password content was not recorded.",
+    });
+
     revalidatePath("/admin/accounts");
 
     redirect(
@@ -343,6 +361,15 @@ export async function setAdminAccountStatus(
             "/admin/accounts?error=status_failed",
         );
     }
+
+    await recordAdminAudit({
+        actor: currentAdmin,
+        action: "admin_status_changed",
+        targetType: "admin_account",
+        targetId: targetUserId,
+        summary: `Changed a staff account to ${requestedStatus}.`,
+        metadata: { status: requestedStatus },
+    });
 
     revalidatePath("/admin/accounts");
 

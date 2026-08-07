@@ -25,6 +25,11 @@ const adminNavigation: AdminNavigationItem[] = [
         ownerOnly: true,
     },
     {
+        label: "Activity Log",
+        href: "/admin/activity",
+        ownerOnly: true,
+    },
+    {
         label: "Members",
         href: "/admin/members",
     },
