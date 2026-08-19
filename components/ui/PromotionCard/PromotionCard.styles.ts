@@ -46,10 +46,7 @@ export const imageWrapperStyles = `
 export const imageStyles = `
   h-full
   w-full
-  object-cover
-  transition-transform
-  duration-500
-  group-hover:scale-105
+  object-contain
 `;
 
 export const imagePlaceholderStyles = `
