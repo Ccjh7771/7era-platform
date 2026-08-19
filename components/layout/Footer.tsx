@@ -135,13 +135,6 @@ export async function Footer() {
               </Link>
 
               <Link
-                href="/faq"
-                className="text-zinc-400 transition hover:text-yellow-300"
-              >
-                FAQ
-              </Link>
-
-              <Link
                 href="/#contact"
                 className="text-zinc-400 transition hover:text-yellow-300"
               >

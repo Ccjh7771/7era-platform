@@ -35,11 +35,6 @@ const contentCards = [
     value: "6",
     href: "/admin/promotions",
   },
-  {
-    label: "FAQ",
-    value: "6",
-    href: "/admin/faq",
-  },
 ];
 
 type DashboardCardData = {
@@ -115,12 +110,6 @@ const managementLinks = [
     href: "/admin/promotions",
   },
   {
-    title: "Manage FAQ",
-    description:
-      "Create, edit, reorder and hide frequently asked questions.",
-    href: "/admin/faq",
-  },
-  {
     title: "Website Settings",
     description:
       "Manage website identity, navigation, contact links and SEO.",
@@ -149,7 +138,6 @@ export default async function AdminPage() {
     gameResult,
     downloadResult,
     promotionResult,
-    faqResult,
     settingsResult,
     brandLinksResult,
     gameLinksResult,
@@ -188,10 +176,6 @@ export default async function AdminPage() {
       head: true,
     }),
     adminClient.from("promotions").select("id", {
-      count: "exact",
-      head: true,
-    }),
-    adminClient.from("faq_items").select("id", {
       count: "exact",
       head: true,
     }),
@@ -365,7 +349,7 @@ export default async function AdminPage() {
           <h2 className="mt-3 text-2xl font-black">Published content</h2>
         </div>
 
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {contentCards.map((card) => (
             <DashboardCard
               key={card.label}
@@ -378,9 +362,7 @@ export default async function AdminPage() {
                       ? { ...card, value: String(downloadResult.count ?? 0) }
                       : card.label === "Promotions"
                         ? { ...card, value: String(promotionResult.count ?? 0) }
-                        : card.label === "FAQ"
-                          ? { ...card, value: String(faqResult.count ?? 0) }
-                          : card
+                        : card
               }
             />
           ))}

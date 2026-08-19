@@ -19,7 +19,6 @@ const navigationItems = [
   { title: "Games", href: "/#games" },
   { title: "Downloads", href: "/download" },
   { title: "Promotions", href: "/promotions" },
-  { title: "FAQ", href: "/faq" },
   { title: "Members", href: "/member/login" },
 ];
 
