@@ -24,7 +24,5 @@ export async function GET(request: NextRequest) {
     console.error("Password recovery code exchange failed:", error.message);
   }
 
-  return NextResponse.redirect(
-    new URL("/auth/login?error=recovery", requestUrl.origin),
-  );
+  return NextResponse.redirect(new URL("/auth/recovery", requestUrl.origin));
 }
