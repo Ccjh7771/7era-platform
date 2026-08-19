@@ -135,26 +135,6 @@ export const subtitleStyles =
 export const descriptionStyles =
   "mt-4 text-sm leading-7 text-zinc-400";
 
-export const validityStyles = `
-  mt-6
-  flex
-  items-center
-  justify-between
-  gap-4
-  rounded-2xl
-  border
-  border-white/10
-  bg-black/30
-  px-4
-  py-3
-`;
-
-export const validityLabelStyles =
-  "text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500";
-
-export const validityValueStyles =
-  "text-right text-sm font-bold text-zinc-200";
-
 export const actionsStyles =
   "mt-auto pt-7";
 
@@ -183,13 +163,6 @@ export const actionLinkStyles = `
   focus-visible:outline-none
   focus-visible:ring-2
   focus-visible:ring-yellow-400
-`;
-
-export const disabledActionStyles = `
-  cursor-not-allowed
-  opacity-45
-  hover:translate-y-0
-  hover:shadow-none
 `;
 
 export const arrowStyles =

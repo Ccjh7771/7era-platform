@@ -14,11 +14,8 @@ type PromotionInput = {
     subtitle: string;
     description: string;
     category: string;
-    validity_label: string;
-    href: string;
     status: "active" | "upcoming" | "ended";
     is_featured: boolean;
-    is_disabled: boolean;
     sort_order: number;
 };
 
@@ -33,23 +30,6 @@ const storageHostname =
 const maximumImageSize = 2 * 1024 * 1024;
 const allowedStatuses = new Set(["active", "upcoming", "ended"]);
 
-function isValidDestination(value: string) {
-    if (
-        value === "#" ||
-        /^#[a-z0-9-]+$/i.test(value) ||
-        (value.startsWith("/") && !value.startsWith("//"))
-    ) {
-        return true;
-    }
-
-    try {
-        const url = new URL(value);
-        return url.protocol === "https:" || url.protocol === "http:";
-    } catch {
-        return false;
-    }
-}
-
 function parsePromotionInput(
     formData: FormData,
 ): PromotionInput | null {
@@ -62,10 +42,6 @@ function parsePromotionInput(
         formData.get("description") ?? "",
     ).trim();
     const category = String(formData.get("category") ?? "").trim();
-    const validityLabel = String(
-        formData.get("validityLabel") ?? "",
-    ).trim();
-    const href = String(formData.get("href") ?? "").trim();
     const status = String(formData.get("status") ?? "");
     const sortOrder = Number(formData.get("sortOrder"));
 
@@ -78,9 +54,6 @@ function parsePromotionInput(
         description.length > 500 ||
         category.length < 1 ||
         category.length > 60 ||
-        validityLabel.length < 1 ||
-        validityLabel.length > 100 ||
-        !isValidDestination(href) ||
         !allowedStatuses.has(status) ||
         !Number.isInteger(sortOrder) ||
         sortOrder < 0 ||
@@ -95,11 +68,8 @@ function parsePromotionInput(
         subtitle,
         description,
         category,
-        validity_label: validityLabel,
-        href,
         status: status as PromotionInput["status"],
         is_featured: formData.get("isFeatured") === "on",
-        is_disabled: formData.get("isDisabled") === "on",
         sort_order: sortOrder,
     };
 }
@@ -259,6 +229,9 @@ export async function createPromotion(formData: FormData) {
     const image = imageResult.upload;
     const { error } = await adminClient.from("promotions").insert({
         ...input,
+        validity_label: "Available",
+        href: "/#brands",
+        is_disabled: false,
         image_path: image?.publicUrl ?? null,
         is_active: true,
     });
@@ -315,6 +288,9 @@ export async function updatePromotion(formData: FormData) {
         .from("promotions")
         .update({
             ...input,
+            validity_label: "Available",
+            href: "/#brands",
+            is_disabled: false,
             ...(nextImage ? { image_path: nextImage.publicUrl } : {}),
             updated_at: new Date().toISOString(),
         })

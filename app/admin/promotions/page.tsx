@@ -23,12 +23,9 @@ type PromotionRow = {
     subtitle: string;
     description: string;
     category: string;
-    validity_label: string;
     image_path: string | null;
-    href: string;
     status: "active" | "upcoming" | "ended";
     is_featured: boolean;
-    is_disabled: boolean;
     sort_order: number;
     is_active: boolean;
 };
@@ -193,25 +190,6 @@ function PromotionFields({
 
             <div>
                 <label
-                    htmlFor={`${idPrefix}-validity`}
-                    className="text-sm font-semibold text-zinc-200"
-                >
-                    Validity label
-                </label>
-                <input
-                    id={`${idPrefix}-validity`}
-                    name="validityLabel"
-                    type="text"
-                    required
-                    maxLength={100}
-                    defaultValue={promotion?.validity_label}
-                    placeholder="Limited-time campaign"
-                    className={inputClassName}
-                />
-            </div>
-
-            <div>
-                <label
                     htmlFor={`${idPrefix}-sort-order`}
                     className="text-sm font-semibold text-zinc-200"
                 >
@@ -230,24 +208,6 @@ function PromotionFields({
                 />
             </div>
 
-            <div className="sm:col-span-2">
-                <label
-                    htmlFor={`${idPrefix}-href`}
-                    className="text-sm font-semibold text-zinc-200"
-                >
-                    Promotion link
-                </label>
-                <input
-                    id={`${idPrefix}-href`}
-                    name="href"
-                    type="text"
-                    required
-                    defaultValue={promotion?.href ?? "#"}
-                    placeholder="https://..., /page or #"
-                    className={inputClassName}
-                />
-            </div>
-
             <div className="sm:col-span-2 flex flex-wrap gap-6 rounded-2xl border border-white/10 bg-black/30 p-4">
                 <label className="flex items-center gap-3 text-sm font-semibold text-zinc-300">
                     <input
@@ -257,15 +217,6 @@ function PromotionFields({
                         className={checkboxClassName}
                     />
                     Featured promotion
-                </label>
-                <label className="flex items-center gap-3 text-sm font-semibold text-zinc-300">
-                    <input
-                        name="isDisabled"
-                        type="checkbox"
-                        defaultChecked={promotion?.is_disabled ?? false}
-                        className={checkboxClassName}
-                    />
-                    Disable promotion button
                 </label>
             </div>
         </div>
@@ -285,7 +236,7 @@ export default async function AdminPromotionsPage({
         await adminClient
             .from("promotions")
             .select(
-                "id, slug, title, subtitle, description, category, validity_label, image_path, href, status, is_featured, is_disabled, sort_order, is_active",
+                "id, slug, title, subtitle, description, category, image_path, status, is_featured, sort_order, is_active",
             )
             .order("sort_order", { ascending: true })
             .order("id", { ascending: true });

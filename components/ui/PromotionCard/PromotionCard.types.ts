@@ -9,13 +9,10 @@ export interface PromotionCardProps {
   description: string;
 
   category: string;
-  validityLabel: string;
 
   image?: string;
-  href: string;
 
   status?: PromotionStatus;
   featured?: boolean;
-  disabled?: boolean;
   className?: string;
 }

@@ -126,12 +126,9 @@ export function PromotionSection({
                                 subtitle={promotion.subtitle}
                                 description={promotion.description}
                                 category={promotion.category}
-                                validityLabel={promotion.validityLabel}
                                 image={promotion.image}
-                                href={promotion.href}
                                 status={promotion.status}
                                 featured={promotion.featured}
-                                disabled={promotion.disabled}
                                 className="h-full"
                             />
                         </Reveal>
