@@ -29,7 +29,7 @@ export const contentStyles =
 export const imageWrapperStyles = `
   relative
   flex
-  aspect-[16/9]
+  aspect-square
   w-full
   items-center
   justify-center
