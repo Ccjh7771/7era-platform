@@ -3,8 +3,6 @@ import Link from "next/link";
 import { getWebsiteSettings } from "@/lib/data/get-website-settings";
 import { isActionableHref } from "@/lib/links";
 
-const COMPLAINT_WHATSAPP_URL = "https://wa.me/60122127277";
-
 export async function Footer() {
   const settings = await getWebsiteSettings();
   const hasWhatsApp = isActionableHref(settings.whatsappUrl);
@@ -14,7 +12,10 @@ export async function Footer() {
     "Registered mobile number:",
     "Issue:",
   ].join("\n");
-  const complaintUrl = `${COMPLAINT_WHATSAPP_URL}?text=${encodeURIComponent(complaintMessage)}`;
+  const complaintWhatsAppNumber = settings.complaintPhone.startsWith("0")
+    ? `60${settings.complaintPhone.slice(1)}`
+    : settings.complaintPhone;
+  const complaintUrl = `https://wa.me/${complaintWhatsAppNumber}?text=${encodeURIComponent(complaintMessage)}`;
 
   return (
     <>

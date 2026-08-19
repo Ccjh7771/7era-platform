@@ -24,6 +24,7 @@ type WebsiteSettingsRow = {
     support_heading: string;
     support_description: string;
     whatsapp_url: string;
+    complaint_phone: string;
     heylink_url: string;
     support_email: string;
     seo_title: string;
@@ -63,7 +64,7 @@ function TextField({
     value: string;
     maxLength: number;
     placeholder?: string;
-    type?: "text" | "email" | "url";
+    type?: "text" | "email" | "url" | "tel";
 }) {
     return (
         <div>
@@ -126,7 +127,7 @@ export default async function AdminSettingsPage({
     const { data, error } = await adminClient
         .from("website_settings")
         .select(
-            "site_name, short_name, brand_label, tagline, logo_path, primary_cta_label, primary_cta_url, support_heading, support_description, whatsapp_url, heylink_url, support_email, seo_title, seo_description, site_url, copyright_text",
+            "site_name, short_name, brand_label, tagline, logo_path, primary_cta_label, primary_cta_url, support_heading, support_description, whatsapp_url, complaint_phone, heylink_url, support_email, seo_title, seo_description, site_url, copyright_text",
         )
         .eq("id", 1)
         .single();
@@ -272,6 +273,15 @@ export default async function AdminSettingsPage({
                             value={settings.whatsapp_url}
                             maxLength={500}
                             placeholder="https://wa.me/... or #"
+                        />
+                        <TextField
+                            id="complaint-phone"
+                            name="complaintPhone"
+                            label="Complaint hotline number"
+                            value={settings.complaint_phone}
+                            maxLength={20}
+                            type="tel"
+                            placeholder="0122127277"
                         />
                         <TextField
                             id="heylink-url"

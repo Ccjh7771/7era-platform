@@ -18,6 +18,7 @@ type WebsiteSettingsInput = {
     support_heading: string;
     support_description: string;
     whatsapp_url: string;
+    complaint_phone: string;
     heylink_url: string;
     support_email: string;
     seo_title: string;
@@ -71,7 +72,24 @@ function isValidExternalUrl(value: string) {
     }
 }
 
+function normalizeMalaysianMobile(value: string) {
+    const digits = value.replace(/\D/g, "");
+    const localNumber = digits.startsWith("60")
+        ? `0${digits.slice(2)}`
+        : digits;
+
+    return /^01\d{8,9}$/.test(localNumber) ? localNumber : null;
+}
+
 function parseSettingsInput(formData: FormData): WebsiteSettingsInput | null {
+    const complaintPhone = normalizeMalaysianMobile(
+        String(formData.get("complaintPhone") ?? "").trim(),
+    );
+
+    if (!complaintPhone) {
+        return null;
+    }
+
     const input = {
         site_name: String(formData.get("siteName") ?? "").trim(),
         short_name: String(formData.get("shortName") ?? "").trim(),
@@ -90,6 +108,7 @@ function parseSettingsInput(formData: FormData): WebsiteSettingsInput | null {
             formData.get("supportDescription") ?? "",
         ).trim(),
         whatsapp_url: String(formData.get("whatsappUrl") ?? "").trim(),
+        complaint_phone: complaintPhone,
         heylink_url: String(formData.get("heylinkUrl") ?? "").trim(),
         support_email: String(formData.get("supportEmail") ?? "")
             .trim()

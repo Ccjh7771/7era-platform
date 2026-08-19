@@ -20,6 +20,7 @@ type WebsiteSettingsRow = {
   support_heading: string;
   support_description: string;
   whatsapp_url: string;
+  complaint_phone: string;
   heylink_url: string;
   support_email: string;
   seo_title: string;
@@ -35,7 +36,7 @@ export const getWebsiteSettings = cache(
       const { data, error } = await supabase
         .from("website_settings")
         .select(
-          "site_name, short_name, brand_label, tagline, logo_path, primary_cta_label, primary_cta_url, support_heading, support_description, whatsapp_url, heylink_url, support_email, seo_title, seo_description, site_url, copyright_text",
+          "site_name, short_name, brand_label, tagline, logo_path, primary_cta_label, primary_cta_url, support_heading, support_description, whatsapp_url, complaint_phone, heylink_url, support_email, seo_title, seo_description, site_url, copyright_text",
         )
         .eq("id", 1)
         .single();
@@ -57,6 +58,7 @@ export const getWebsiteSettings = cache(
         supportHeading: settings.support_heading,
         supportDescription: settings.support_description,
         whatsappUrl: settings.whatsapp_url,
+        complaintPhone: settings.complaint_phone,
         heylinkUrl: settings.heylink_url,
         supportEmail: settings.support_email,
         seoTitle: settings.seo_title,

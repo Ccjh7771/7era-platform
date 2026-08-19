@@ -9,6 +9,7 @@ export type WebsiteSettings = {
   supportHeading: string;
   supportDescription: string;
   whatsappUrl: string;
+  complaintPhone: string;
   heylinkUrl: string;
   supportEmail: string;
   seoTitle: string;
@@ -30,6 +31,7 @@ export const defaultWebsiteSettings: WebsiteSettings = {
   supportDescription:
     "Our support team is available to help with account enquiries, platform access, game downloads and general assistance.",
   whatsappUrl: "#",
+  complaintPhone: "0122127277",
   heylinkUrl: "#",
   supportEmail: "support@7era.com",
   seoTitle: "7ERA Platform",
