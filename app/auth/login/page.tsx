@@ -15,6 +15,8 @@ const errorMessages: Record<string, string> = {
     "Too many failed attempts. Please wait 15 minutes before trying again.",
   unauthorized:
     "This account is not authorized to access the admin area.",
+  recovery:
+    "This recovery link is invalid or expired. Please request a new one.",
 };
 
 export default async function AdminLoginPage({
@@ -121,10 +123,14 @@ export default async function AdminLoginPage({
             Sign in securely
           </button>
 
-          <p className="mt-5 text-center text-xs leading-5 text-zinc-500">
-            Contact the account owner if you have
-            forgotten your password.
-          </p>
+          <div className="mt-5 text-center">
+            <Link
+              href="/auth/forgot-password"
+              className="text-sm font-semibold text-yellow-300 transition hover:text-yellow-200"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         <div className="mt-7 text-center">
