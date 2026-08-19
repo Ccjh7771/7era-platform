@@ -33,12 +33,6 @@ const storageHostname =
 const maximumImageSize = 2 * 1024 * 1024;
 const allowedStatuses = new Set(["active", "upcoming", "ended"]);
 
-const imageExtensions: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-};
-
 function isValidDestination(value: string) {
     if (
         value === "#" ||
@@ -110,42 +104,42 @@ function parsePromotionInput(
     };
 }
 
-function hasValidFileSignature(
-    bytes: Uint8Array,
-    mimeType: string,
-) {
-    if (mimeType === "image/png") {
-        const signature = [
-            0x89,
-            0x50,
-            0x4e,
-            0x47,
-            0x0d,
-            0x0a,
-            0x1a,
-            0x0a,
-        ];
-        return signature.every(
+function detectImageType(bytes: Uint8Array) {
+    const pngSignature = [
+        0x89,
+        0x50,
+        0x4e,
+        0x47,
+        0x0d,
+        0x0a,
+        0x1a,
+        0x0a,
+    ];
+
+    if (
+        pngSignature.every(
             (value, index) => bytes[index] === value,
-        );
+        )
+    ) {
+        return { extension: "png", contentType: "image/png" };
     }
 
-    if (mimeType === "image/jpeg") {
-        return (
-            bytes[0] === 0xff &&
-            bytes[1] === 0xd8 &&
-            bytes[2] === 0xff
-        );
+    if (
+        bytes[0] === 0xff &&
+        bytes[1] === 0xd8 &&
+        bytes[2] === 0xff
+    ) {
+        return { extension: "jpg", contentType: "image/jpeg" };
     }
 
-    if (mimeType === "image/webp") {
-        return (
-            String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-            String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
-        );
+    if (
+        String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+        String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
+    ) {
+        return { extension: "webp", contentType: "image/webp" };
     }
 
-    return false;
+    return null;
 }
 
 async function uploadImage(
@@ -161,24 +155,23 @@ async function uploadImage(
         return { upload: null };
     }
 
-    const extension = imageExtensions[imageFile.type];
-
-    if (!extension || imageFile.size > maximumImageSize) {
+    if (imageFile.size > maximumImageSize) {
         return { error: "invalid_image" };
     }
 
     const bytes = new Uint8Array(await imageFile.arrayBuffer());
+    const detectedType = detectImageType(bytes);
 
-    if (!hasValidFileSignature(bytes, imageFile.type)) {
+    if (!detectedType) {
         return { error: "invalid_image" };
     }
 
-    const objectPath = `promotions/${randomUUID()}.${extension}`;
+    const objectPath = `promotions/${randomUUID()}.${detectedType.extension}`;
     const { error } = await adminClient.storage
         .from(imageBucket)
         .upload(objectPath, bytes, {
             cacheControl: "31536000",
-            contentType: imageFile.type,
+            contentType: detectedType.contentType,
             upsert: false,
         });
 
