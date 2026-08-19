@@ -38,8 +38,9 @@ export function BrandCard({ brand }: BrandCardProps) {
           <Image
             src={brand.logo}
             alt={`${brand.name} logo`}
-            width={96}
-            height={96}
+            width={360}
+            height={180}
+            sizes="(max-width: 768px) calc(100vw - 48px), (max-width: 1280px) 50vw, 25vw"
             className={logoStyles}
           />
         </div>

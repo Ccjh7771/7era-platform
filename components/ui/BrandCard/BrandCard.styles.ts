@@ -30,15 +30,15 @@ export const logoWrapperStyles =
   `
   relative
   flex
-  h-28
-  w-28
+  h-40
+  w-full
   items-center
   justify-center
   rounded-3xl
   border
   border-yellow-400/20
   bg-black/40
-  p-4
+  p-5
   shadow-[0_0_35px_rgba(250,204,21,0.08)]
   transition-all
   duration-500
@@ -52,6 +52,7 @@ export const logoStyles =
   `
   h-full
   w-full
+  max-w-[360px]
   object-contain
   transition-transform
   duration-500

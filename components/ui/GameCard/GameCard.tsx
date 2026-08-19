@@ -39,8 +39,9 @@ export function GameCard({
           <Image
             src={game.logo}
             alt={game.name}
-            width={120}
-            height={120}
+            width={480}
+            height={240}
+            sizes="(max-width: 768px) calc(100vw - 48px), (max-width: 1280px) 50vw, 33vw"
             className={imageStyles}
           />
         </div>

@@ -25,15 +25,15 @@ export const gameContentStyles =
 
 export const imageWrapperStyles = `
   flex
-  h-28
-  w-28
+  h-48
+  w-full
   items-center
   justify-center
   rounded-3xl
   border
   border-yellow-400/20
   bg-black/40
-  p-4
+  p-5
   transition-all
   duration-500
   group-hover:scale-110
@@ -44,6 +44,7 @@ export const imageWrapperStyles = `
 export const imageStyles = `
   h-full
   w-full
+  max-w-[480px]
   object-contain
   transition-transform
   duration-500
