@@ -41,7 +41,7 @@ export async function Footer() {
             </svg>
           </span>
 
-          <span className="pr-1">
+          <span className="hidden pr-1 sm:block">
             <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-yellow-300">
               Need assistance?
             </span>
