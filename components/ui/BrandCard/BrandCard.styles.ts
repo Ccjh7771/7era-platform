@@ -24,13 +24,13 @@ export const brandCardStyles =
   `;
 
 export const brandContentStyles =
-  "flex h-full flex-col items-center text-center";
+  "flex h-full flex-col items-center p-5 text-center sm:p-8";
 
 export const logoWrapperStyles =
   `
   relative
   flex
-  h-40
+  h-32
   w-full
   items-center
   justify-center
@@ -38,7 +38,7 @@ export const logoWrapperStyles =
   border
   border-yellow-400/20
   bg-black/40
-  p-5
+  p-4
   shadow-[0_0_35px_rgba(250,204,21,0.08)]
   transition-all
   duration-500
@@ -46,6 +46,9 @@ export const logoWrapperStyles =
   group-hover:scale-110
   group-hover:border-yellow-300/40
   group-hover:shadow-[0_0_45px_rgba(250,204,21,0.18)]
+
+  sm:h-40
+  sm:p-5
   `;
 
 export const logoStyles =
@@ -61,31 +64,33 @@ export const logoStyles =
 
 export const brandNameStyles =
   `
-  mt-7
-  text-2xl
+  mt-5
+  text-xl
   font-black
   leading-tight
   tracking-tight
   text-white
 
+  sm:mt-7
   sm:text-[1.75rem]
   `;
 
 export const descriptionStyles =
   `
-  mt-5
+  mt-4
   flex
-  min-h-[112px]
+  min-h-0
   w-full
+  flex-col
   items-center
   justify-center
+  gap-2
   break-words
-  whitespace-pre-line
   rounded-2xl
   border
   border-white/[0.06]
   bg-black/25
-  px-5
+  px-3
   py-4
   text-base
   font-medium
@@ -93,6 +98,7 @@ export const descriptionStyles =
   text-zinc-300
   [text-wrap:balance]
 
+  sm:mt-5
   sm:min-h-[128px]
   sm:px-6
   sm:text-lg
@@ -101,7 +107,7 @@ export const descriptionStyles =
 
 export const ratingWrapperStyles =
   `
-  mt-6
+  mt-5
   flex
   items-center
   gap-2
@@ -134,8 +140,9 @@ export const actionsStyles =
   w-full
   grid-cols-1
   gap-3
-  pt-8
+  pt-6
   sm:grid-cols-2
+  sm:pt-8
   `;
 
 export const whatsappLinkStyles =

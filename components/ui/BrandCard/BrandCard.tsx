@@ -26,11 +26,15 @@ export function BrandCard({ brand }: BrandCardProps) {
   );
   const hasWhatsApp = isActionableHref(brand.whatsapp);
   const hasHeyLink = isActionableHref(brand.heylink);
+  const descriptionLines = brand.description
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
     <Card
       className={brandCardStyles}
-      padding="lg"
+      padding="none"
       hoverable
     >
       <div className={brandContentStyles}>
@@ -50,7 +54,11 @@ export function BrandCard({ brand }: BrandCardProps) {
         </h3>
 
         <p className={descriptionStyles}>
-          {brand.description}
+          {descriptionLines.map((line, index) => (
+            <span key={`${line}-${index}`} className="block w-full">
+              {line}
+            </span>
+          ))}
         </p>
 
         <div
