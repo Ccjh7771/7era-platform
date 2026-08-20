@@ -189,24 +189,27 @@ async function uploadLogo(
             : { upload: null };
     }
 
-    const extension = logoExtensions[logoFile.type];
-
-    if (!extension || logoFile.size > maximumLogoSize) {
+    if (logoFile.size > maximumLogoSize) {
         return { error: "invalid_logo" };
     }
 
     const bytes = new Uint8Array(await logoFile.arrayBuffer());
+    const detectedLogoType = Object.entries(logoExtensions).find(
+        ([mimeType]) => hasValidFileSignature(bytes, mimeType),
+    );
 
-    if (!hasValidFileSignature(bytes, logoFile.type)) {
+    if (!detectedLogoType) {
         return { error: "invalid_logo" };
     }
+
+    const [mimeType, extension] = detectedLogoType;
 
     const objectPath = `downloads/${randomUUID()}.${extension}`;
     const { error } = await adminClient.storage
         .from(logoBucket)
         .upload(objectPath, bytes, {
             cacheControl: "31536000",
-            contentType: logoFile.type,
+            contentType: mimeType,
             upsert: false,
         });
 
