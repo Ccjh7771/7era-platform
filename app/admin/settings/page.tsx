@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { AdminSubmitButton } from "@/app/admin/_components/AdminSubmitButton";
 import { requireOwner } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -36,6 +37,7 @@ type WebsiteSettingsRow = {
 const errorMessages: Record<string, string> = {
     invalid: "Check the settings fields and try again.",
     invalid_logo: "Choose a valid PNG, JPG or WebP image up to 2MB.",
+    logo_too_large: "This website logo is larger than 2MB. Choose a smaller image.",
     upload_failed: "The website logo could not be uploaded. Please try again.",
     server: "Website settings could not be saved. Please try again.",
 };
@@ -323,12 +325,12 @@ export default async function AdminSettingsPage({
                 </section>
 
                 <div className="flex justify-end">
-                    <button
-                        type="submit"
+                    <AdminSubmitButton
+                        pendingLabel="Saving…"
                         className="flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 px-8 text-sm font-black text-black transition hover:scale-[1.01]"
                     >
                         Save website settings
-                    </button>
+                    </AdminSubmitButton>
                 </div>
             </form>
         </section>

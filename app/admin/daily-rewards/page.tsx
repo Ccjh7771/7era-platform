@@ -47,7 +47,7 @@ export default async function AdminDailyRewardsPage({ searchParams }: { searchPa
       <h1 className="mt-3 text-3xl font-black">Daily Rewards</h1>
       <p className="mt-2 text-sm text-zinc-500">Members continue to the next day even when they miss a calendar day. Reset time is 12:00 AM Malaysia time.</p>
       {params.success && <p className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">Daily Reward settings updated.</p>}
-      {params.error && <p className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">Unable to save the requested change.</p>}
+      {params.error && <p className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{params.error === "image_too_large" ? "This reward image is larger than 3MB. Choose a smaller image." : params.error === "invalid_image" ? "Choose a genuine PNG, JPG or WebP reward image." : params.error === "upload_failed" ? "The reward image could not be uploaded. Please try again." : "Unable to save the requested change."}</p>}
       <form action={updateDailyRewardSettings} className="mt-8 grid gap-5 rounded-[28px] border border-white/10 bg-white/[0.04] p-6 sm:grid-cols-2">
         <div><label className="text-sm font-semibold">Title</label><input name="title" required defaultValue={settings?.title} className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4" /></div>
         <div><label className="text-sm font-semibold">Cycle length</label><input name="cycleLength" type="number" min={1} max={31} required defaultValue={settings?.cycle_length ?? 7} className="mt-2 h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4" /></div>

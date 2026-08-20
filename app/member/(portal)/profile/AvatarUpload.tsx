@@ -1,20 +1,20 @@
 "use client";
 
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/client";
+import {
+  cmsImageAccept,
+  cmsImageMaximumBytes,
+  detectCmsImageType,
+} from "@/lib/cms-image";
 
-import { removeMemberAvatar, saveMemberAvatar } from "./actions";
+import { removeMemberAvatar, uploadMemberAvatar } from "./actions";
 
-const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-const maximumSize = 2 * 1024 * 1024;
-
-export function AvatarUpload({ memberId, hasAvatar }: { memberId: string; hasAvatar: boolean }) {
+export function AvatarUpload({ hasAvatar }: { hasAvatar: boolean }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
-  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
   async function uploadAvatar(event: ChangeEvent<HTMLInputElement>) {
@@ -22,9 +22,22 @@ export function AvatarUpload({ memberId, hasAvatar }: { memberId: string; hasAva
     event.target.value = "";
     if (!file || busy) return;
 
-    if (!allowedTypes.has(file.type) || file.size > maximumSize) {
+    if (file.size > cmsImageMaximumBytes) {
       setIsError(true);
-      setMessage("Choose a JPG, PNG or WebP image up to 2MB.");
+      setMessage("Choose a profile photo up to 2MB.");
+      return;
+    }
+
+    try {
+      const header = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+      if (!detectCmsImageType(header)) {
+        setIsError(true);
+        setMessage("Choose a genuine JPG, PNG or WebP photo.");
+        return;
+      }
+    } catch {
+      setIsError(true);
+      setMessage("This photo could not be read. Choose another file.");
       return;
     }
 
@@ -32,26 +45,20 @@ export function AvatarUpload({ memberId, hasAvatar }: { memberId: string; hasAva
     setMessage("");
     setIsError(false);
 
-    const { error: uploadError } = await supabase.storage
-      .from("member-avatars")
-      .upload(`${memberId}/avatar`, file, {
-        upsert: true,
-        contentType: file.type,
-        cacheControl: "3600",
-      });
+    const formData = new FormData();
+    formData.set("avatarFile", file);
 
-    if (uploadError) {
+    try {
+      const result = await uploadMemberAvatar(formData);
+      setBusy(false);
+      setIsError(!result.ok);
+      setMessage(result.message);
+      if (result.ok) router.refresh();
+    } catch {
       setBusy(false);
       setIsError(true);
-      setMessage("Unable to upload the profile photo.");
-      return;
+      setMessage("Unable to upload the profile photo. Please try again.");
     }
-
-    const result = await saveMemberAvatar();
-    setBusy(false);
-    setIsError(!result.ok);
-    setMessage(result.message);
-    if (result.ok) router.refresh();
   }
 
   async function removeAvatar() {
@@ -71,7 +78,7 @@ export function AvatarUpload({ memberId, hasAvatar }: { memberId: string; hasAva
       <div className="flex flex-wrap justify-center gap-2">
         <label className={`inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl bg-yellow-400 px-5 text-sm font-black text-black ${busy ? "pointer-events-none opacity-60" : ""}`}>
           {busy ? "Updating…" : hasAvatar ? "Change photo" : "Upload photo"}
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} disabled={busy} className="sr-only" />
+          <input type="file" accept={cmsImageAccept} onChange={uploadAvatar} disabled={busy} className="sr-only" />
         </label>
         {hasAvatar && (
           <button type="button" onClick={removeAvatar} disabled={busy} className="min-h-11 rounded-xl border border-white/10 px-4 text-sm font-bold text-zinc-300 disabled:opacity-60">

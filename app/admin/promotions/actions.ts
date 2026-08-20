@@ -1,11 +1,14 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireContentEditor } from "@/lib/admin/access";
+import {
+    getManagedCmsImagePath,
+    removeCmsImage,
+    uploadCmsImage,
+} from "@/lib/admin/cms-logo-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type PromotionInput = {
@@ -19,15 +22,9 @@ type PromotionInput = {
     sort_order: number;
 };
 
-type UploadedImage = {
-    objectPath: string;
-    publicUrl: string;
-};
-
 const imageBucket = "promotion-images";
 const storageHostname =
     "imkfmynzsnjckdzctwpp.supabase.co";
-const maximumImageSize = 2 * 1024 * 1024;
 const allowedStatuses = new Set(["active", "upcoming", "ended"]);
 
 function parsePromotionInput(
@@ -74,127 +71,6 @@ function parsePromotionInput(
     };
 }
 
-function detectImageType(bytes: Uint8Array) {
-    const pngSignature = [
-        0x89,
-        0x50,
-        0x4e,
-        0x47,
-        0x0d,
-        0x0a,
-        0x1a,
-        0x0a,
-    ];
-
-    if (
-        pngSignature.every(
-            (value, index) => bytes[index] === value,
-        )
-    ) {
-        return { extension: "png", contentType: "image/png" };
-    }
-
-    if (
-        bytes[0] === 0xff &&
-        bytes[1] === 0xd8 &&
-        bytes[2] === 0xff
-    ) {
-        return { extension: "jpg", contentType: "image/jpeg" };
-    }
-
-    if (
-        String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-        String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
-    ) {
-        return { extension: "webp", contentType: "image/webp" };
-    }
-
-    return null;
-}
-
-async function uploadImage(
-    adminClient: ReturnType<typeof createAdminClient>,
-    formData: FormData,
-): Promise<
-    | { error: "invalid_image" | "upload_failed" }
-    | { upload: UploadedImage | null }
-> {
-    const imageFile = formData.get("imageFile");
-
-    if (!(imageFile instanceof File) || imageFile.size === 0) {
-        return { upload: null };
-    }
-
-    if (imageFile.size > maximumImageSize) {
-        return { error: "invalid_image" };
-    }
-
-    const bytes = new Uint8Array(await imageFile.arrayBuffer());
-    const detectedType = detectImageType(bytes);
-
-    if (!detectedType) {
-        return { error: "invalid_image" };
-    }
-
-    const objectPath = `promotions/${randomUUID()}.${detectedType.extension}`;
-    const { error } = await adminClient.storage
-        .from(imageBucket)
-        .upload(objectPath, bytes, {
-            cacheControl: "31536000",
-            contentType: detectedType.contentType,
-            upsert: false,
-        });
-
-    if (error) {
-        console.error("Unable to upload promotion image:", error.message);
-        return { error: "upload_failed" };
-    }
-
-    const { data } = adminClient.storage
-        .from(imageBucket)
-        .getPublicUrl(objectPath);
-
-    return {
-        upload: {
-            objectPath,
-            publicUrl: data.publicUrl,
-        },
-    };
-}
-
-function getManagedImagePath(imageUrl: string) {
-    try {
-        const url = new URL(imageUrl);
-        const marker =
-            `/storage/v1/object/public/${imageBucket}/`;
-
-        if (
-            url.protocol !== "https:" ||
-            url.hostname !== storageHostname ||
-            !url.pathname.startsWith(marker)
-        ) {
-            return null;
-        }
-
-        return decodeURIComponent(url.pathname.slice(marker.length));
-    } catch {
-        return null;
-    }
-}
-
-async function removeImage(
-    adminClient: ReturnType<typeof createAdminClient>,
-    objectPath: string,
-) {
-    const { error } = await adminClient.storage
-        .from(imageBucket)
-        .remove([objectPath]);
-
-    if (error) {
-        console.error("Unable to remove promotion image:", error.message);
-    }
-}
-
 async function requirePromotionEditor() {
     await requireContentEditor("/admin/promotions?error=forbidden");
 }
@@ -220,7 +96,14 @@ export async function createPromotion(formData: FormData) {
 
     await requirePromotionEditor();
     const adminClient = createAdminClient();
-    const imageResult = await uploadImage(adminClient, formData);
+    const imageResult = await uploadCmsImage({
+        adminClient,
+        bucket: imageBucket,
+        folder: "promotions",
+        formData,
+        logLabel: "promotion",
+        required: false,
+    });
 
     if ("error" in imageResult) {
         redirect(`/admin/promotions?error=${imageResult.error}`);
@@ -240,7 +123,12 @@ export async function createPromotion(formData: FormData) {
         console.error("Unable to create promotion:", error.message);
 
         if (image) {
-            await removeImage(adminClient, image.objectPath);
+            await removeCmsImage({
+                adminClient,
+                bucket: imageBucket,
+                logLabel: "promotion",
+                objectPath: image.objectPath,
+            });
         }
 
         redirect(
@@ -277,7 +165,14 @@ export async function updatePromotion(formData: FormData) {
         redirect("/admin/promotions?error=server");
     }
 
-    const imageResult = await uploadImage(adminClient, formData);
+    const imageResult = await uploadCmsImage({
+        adminClient,
+        bucket: imageBucket,
+        folder: "promotions",
+        formData,
+        logLabel: "promotion",
+        required: false,
+    });
 
     if ("error" in imageResult) {
         redirect(`/admin/promotions?error=${imageResult.error}`);
@@ -305,7 +200,12 @@ export async function updatePromotion(formData: FormData) {
         );
 
         if (nextImage) {
-            await removeImage(adminClient, nextImage.objectPath);
+            await removeCmsImage({
+                adminClient,
+                bucket: imageBucket,
+                logLabel: "promotion",
+                objectPath: nextImage.objectPath,
+            });
         }
 
         redirect(
@@ -314,12 +214,19 @@ export async function updatePromotion(formData: FormData) {
     }
 
     if (nextImage && existingPromotion.image_path) {
-        const previousImagePath = getManagedImagePath(
-            existingPromotion.image_path,
-        );
+        const previousImagePath = getManagedCmsImagePath({
+            bucket: imageBucket,
+            imageUrl: existingPromotion.image_path,
+            storageHostname,
+        });
 
         if (previousImagePath) {
-            await removeImage(adminClient, previousImagePath);
+            await removeCmsImage({
+                adminClient,
+                bucket: imageBucket,
+                logLabel: "promotion",
+                objectPath: previousImagePath,
+            });
         }
     }
 

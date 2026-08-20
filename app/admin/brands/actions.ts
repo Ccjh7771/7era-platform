@@ -1,11 +1,14 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireContentEditor } from "@/lib/admin/access";
+import {
+    getManagedCmsLogoPath,
+    removeCmsLogo,
+    uploadCmsLogo,
+} from "@/lib/admin/cms-logo-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type BrandInput = {
@@ -17,21 +20,9 @@ type BrandInput = {
     sort_order: number;
 };
 
-type UploadedLogo = {
-    objectPath: string;
-    publicUrl: string;
-};
-
 const logoBucket = "brand-logos";
 const storageHostname =
     "imkfmynzsnjckdzctwpp.supabase.co";
-const maximumLogoSize = 2 * 1024 * 1024;
-
-const logoExtensions: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-};
 
 function isValidLink(value: string) {
     if (value === "#") {
@@ -103,154 +94,6 @@ function parseBrandInput(
     };
 }
 
-function hasValidFileSignature(
-    bytes: Uint8Array,
-    mimeType: string,
-) {
-    if (mimeType === "image/png") {
-        const signature = [
-            0x89,
-            0x50,
-            0x4e,
-            0x47,
-            0x0d,
-            0x0a,
-            0x1a,
-            0x0a,
-        ];
-
-        return signature.every(
-            (value, index) =>
-                bytes[index] === value,
-        );
-    }
-
-    if (mimeType === "image/jpeg") {
-        return (
-            bytes[0] === 0xff &&
-            bytes[1] === 0xd8 &&
-            bytes[2] === 0xff
-        );
-    }
-
-    if (mimeType === "image/webp") {
-        return (
-            String.fromCharCode(...bytes.slice(0, 4)) ===
-                "RIFF" &&
-            String.fromCharCode(...bytes.slice(8, 12)) ===
-                "WEBP"
-        );
-    }
-
-    return false;
-}
-
-async function uploadLogo(
-    adminClient: ReturnType<typeof createAdminClient>,
-    formData: FormData,
-    required: boolean,
-): Promise<
-    | { error: "invalid_logo" | "upload_failed" }
-    | { upload: UploadedLogo | null }
-> {
-    const logoFile = formData.get("logoFile");
-
-    if (
-        !(logoFile instanceof File) ||
-        logoFile.size === 0
-    ) {
-        return required
-            ? { error: "invalid_logo" }
-            : { upload: null };
-    }
-
-    const extension = logoExtensions[logoFile.type];
-
-    if (
-        !extension ||
-        logoFile.size > maximumLogoSize
-    ) {
-        return { error: "invalid_logo" };
-    }
-
-    const bytes = new Uint8Array(
-        await logoFile.arrayBuffer(),
-    );
-
-    if (!hasValidFileSignature(bytes, logoFile.type)) {
-        return { error: "invalid_logo" };
-    }
-
-    const objectPath =
-        `brands/${randomUUID()}.${extension}`;
-
-    const { error } = await adminClient.storage
-        .from(logoBucket)
-        .upload(objectPath, bytes, {
-            cacheControl: "31536000",
-            contentType: logoFile.type,
-            upsert: false,
-        });
-
-    if (error) {
-        console.error(
-            "Unable to upload brand logo:",
-            error.message,
-        );
-
-        return { error: "upload_failed" };
-    }
-
-    const { data } = adminClient.storage
-        .from(logoBucket)
-        .getPublicUrl(objectPath);
-
-    return {
-        upload: {
-            objectPath,
-            publicUrl: data.publicUrl,
-        },
-    };
-}
-
-function getManagedLogoPath(logoUrl: string) {
-    try {
-        const url = new URL(logoUrl);
-        const marker =
-            `/storage/v1/object/public/${logoBucket}/`;
-
-        if (
-            url.protocol !== "https:" ||
-            url.hostname !== storageHostname ||
-            !url.pathname.startsWith(marker)
-        ) {
-            return null;
-        }
-
-        return decodeURIComponent(
-            url.pathname.slice(marker.length),
-        );
-    } catch {
-        return null;
-    }
-}
-
-async function removeLogo(
-    adminClient: ReturnType<typeof createAdminClient>,
-    objectPath: string,
-) {
-    const { error } = await adminClient.storage
-        .from(logoBucket)
-        .remove([objectPath]);
-
-    if (error) {
-        console.error(
-            "Unable to remove brand logo:",
-            error.message,
-        );
-    }
-}
-
 async function requireBrandEditor() {
     await requireContentEditor("/admin/brands?error=forbidden");
 }
@@ -282,11 +125,14 @@ export async function createBrand(
 
     const adminClient = createAdminClient();
 
-    const logoResult = await uploadLogo(
+    const logoResult = await uploadCmsLogo({
         adminClient,
+        bucket: logoBucket,
+        folder: "brands",
         formData,
-        true,
-    );
+        logLabel: "brand",
+        required: true,
+    });
 
     if ("error" in logoResult) {
         redirect(
@@ -314,10 +160,12 @@ export async function createBrand(
             error.message,
         );
 
-        await removeLogo(
+        await removeCmsLogo({
             adminClient,
-            logo.objectPath,
-        );
+            bucket: logoBucket,
+            logLabel: "brand",
+            objectPath: logo.objectPath,
+        });
 
         redirect(
             `/admin/brands?error=${getDatabaseErrorCode(error)}`,
@@ -362,11 +210,14 @@ export async function updateBrand(
         redirect("/admin/brands?error=server");
     }
 
-    const logoResult = await uploadLogo(
+    const logoResult = await uploadCmsLogo({
         adminClient,
+        bucket: logoBucket,
+        folder: "brands",
         formData,
-        false,
-    );
+        logLabel: "brand",
+        required: false,
+    });
 
     if ("error" in logoResult) {
         redirect(
@@ -396,10 +247,12 @@ export async function updateBrand(
         );
 
         if (nextLogo) {
-            await removeLogo(
+            await removeCmsLogo({
                 adminClient,
-                nextLogo.objectPath,
-            );
+                bucket: logoBucket,
+                logLabel: "brand",
+                objectPath: nextLogo.objectPath,
+            });
         }
 
         redirect(
@@ -408,15 +261,19 @@ export async function updateBrand(
     }
 
     if (nextLogo) {
-        const previousLogoPath = getManagedLogoPath(
-            existingBrand.logo_path,
-        );
+        const previousLogoPath = getManagedCmsLogoPath({
+            bucket: logoBucket,
+            logoUrl: existingBrand.logo_path,
+            storageHostname,
+        });
 
         if (previousLogoPath) {
-            await removeLogo(
+            await removeCmsLogo({
                 adminClient,
-                previousLogoPath,
-            );
+                bucket: logoBucket,
+                logLabel: "brand",
+                objectPath: previousLogoPath,
+            });
         }
     }
 

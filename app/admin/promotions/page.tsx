@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { AdminSubmitButton } from "@/app/admin/_components/AdminSubmitButton";
 import { requireAdmin } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -37,6 +38,8 @@ const errorMessages: Record<string, string> = {
     duplicate: "A promotion with this slug already exists.",
     invalid_image:
         "Choose a valid PNG, JPG or WebP image up to 2MB.",
+    image_too_large:
+        "This promotion image is larger than 2MB. Choose a smaller image.",
     upload_failed:
         "The promotion image could not be uploaded. Please try again.",
     server: "The promotion could not be saved. Please try again.",
@@ -307,12 +310,12 @@ export default async function AdminPromotionsPage({
                     </summary>
                     <form action={createPromotion} className="mt-7">
                         <PromotionFields idPrefix="new-promotion" />
-                        <button
-                            type="submit"
+                        <AdminSubmitButton
+                            pendingLabel="Creating…"
                             className="mt-6 flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 px-6 text-sm font-black text-black transition hover:scale-[1.01]"
                         >
                             Create promotion
-                        </button>
+                        </AdminSubmitButton>
                     </form>
                 </details>
             )}
@@ -387,14 +390,14 @@ export default async function AdminPromotionsPage({
                                                 : "visible"
                                         }
                                     />
-                                    <button
-                                        type="submit"
+                                    <AdminSubmitButton
+                                        pendingLabel="Updating…"
                                         className="rounded-xl border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 transition hover:border-yellow-400/30 hover:text-yellow-300"
                                     >
                                         {promotion.is_active
                                             ? "Hide from website"
                                             : "Show on website"}
-                                    </button>
+                                    </AdminSubmitButton>
                                 </form>
 
                                 <details className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-5">
@@ -411,12 +414,12 @@ export default async function AdminPromotionsPage({
                                             promotion={promotion}
                                             idPrefix={`promotion-${promotion.id}`}
                                         />
-                                        <button
-                                            type="submit"
+                                        <AdminSubmitButton
+                                            pendingLabel="Saving…"
                                             className="mt-6 flex h-12 items-center justify-center rounded-xl bg-white px-6 text-sm font-black text-black transition hover:bg-yellow-300"
                                         >
                                             Save changes
-                                        </button>
+                                        </AdminSubmitButton>
                                     </form>
                                 </details>
                             </div>

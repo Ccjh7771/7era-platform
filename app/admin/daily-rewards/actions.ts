@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 
 import { requireContentEditor } from "@/lib/admin/access";
 import { recordAdminAudit } from "@/lib/admin/audit";
-import { uploadEngagementImage } from "@/lib/admin/engagement-image";
+import {
+  getManagedEngagementImagePath,
+  removeEngagementImage,
+  uploadEngagementImage,
+} from "@/lib/admin/engagement-image";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const rewardTypes = new Set(["points", "prize", "welcome_bonus", "double_points", "free_spin", "custom"]);
@@ -41,14 +45,26 @@ export async function saveDailyRewardItem(formData: FormData) {
   const pointsAmount = Number(formData.get("pointsAmount") ?? 0);
   const inventoryText = String(formData.get("inventory") ?? "").trim();
   const inventory = inventoryText === "" ? null : Number(inventoryText);
-  if (!Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 31 || !rewardTypes.has(rewardType) || label.length < 2 || label.length > 100 || description.length > 300 || !Number.isInteger(pointsAmount) || pointsAmount < 0 || pointsAmount > 1000000 || (inventory !== null && (!Number.isInteger(inventory) || inventory < 0))) redirect("/admin/daily-rewards?error=invalid");
+  if ((itemId && !/^[0-9a-f-]{36}$/i.test(itemId)) || !Number.isInteger(dayNumber) || dayNumber < 1 || dayNumber > 31 || !rewardTypes.has(rewardType) || label.length < 2 || label.length > 100 || description.length > 300 || !Number.isInteger(pointsAmount) || pointsAmount < 0 || pointsAmount > 1000000 || (inventory !== null && (!Number.isInteger(inventory) || inventory < 0))) redirect("/admin/daily-rewards?error=invalid");
+  const client = createAdminClient();
+  const { data: existingItem, error: existingItemError } = itemId
+    ? await client.from("daily_reward_items").select("id, image_path").eq("id", itemId).maybeSingle()
+    : { data: null, error: null };
+  if (itemId && (existingItemError || !existingItem)) redirect("/admin/daily-rewards?error=server");
   const upload = await uploadEngagementImage(formData, "daily-rewards");
   if (upload.error) redirect(`/admin/daily-rewards?error=${upload.error}`);
-  const client = createAdminClient();
   const payload = { day_number: dayNumber, reward_type: rewardType, label, description, points_amount: pointsAmount, inventory_total: inventory, inventory_remaining: inventory, is_active: formData.get("isActive") === "on", updated_at: new Date().toISOString(), ...(upload.url ? { image_path: upload.url } : {}) };
   const operation = itemId ? client.from("daily_reward_items").update(payload).eq("id", itemId) : client.from("daily_reward_items").insert(payload);
   const { error } = await operation;
-  if (error) { console.error("Daily item update failed:", error.message); redirect("/admin/daily-rewards?error=server"); }
+  if (error) {
+    console.error("Daily item update failed:", error.message);
+    if (upload.objectPath) await removeEngagementImage(upload.objectPath);
+    redirect("/admin/daily-rewards?error=server");
+  }
+  if (upload.objectPath && existingItem?.image_path) {
+    const previousImagePath = getManagedEngagementImagePath(existingItem.image_path);
+    if (previousImagePath) await removeEngagementImage(previousImagePath);
+  }
   await recordAdminAudit({
     actor: admin,
     action: itemId ? "daily_reward_item_updated" : "daily_reward_item_created",

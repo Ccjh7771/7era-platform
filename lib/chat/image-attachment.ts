@@ -1,5 +1,6 @@
 import "server-only";
 
+import { detectCmsImageType } from "@/lib/cms-image";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const CHAT_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
@@ -34,15 +35,14 @@ async function detectChatImage(file: File): Promise<DetectedImage> {
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
+  const detectedImage = detectCmsImageType(bytes);
 
-  if (startsWith(bytes, [0xff, 0xd8, 0xff])) {
-    return { bytes, extension: "jpg", mimeType: "image/jpeg" };
-  }
-  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
-    return { bytes, extension: "png", mimeType: "image/png" };
-  }
-  if (startsWith(bytes, [0x52, 0x49, 0x46, 0x46]) && startsWith(bytes, [0x57, 0x45, 0x42, 0x50], 8)) {
-    return { bytes, extension: "webp", mimeType: "image/webp" };
+  if (detectedImage) {
+    return {
+      bytes,
+      extension: detectedImage.extension,
+      mimeType: detectedImage.contentType,
+    };
   }
   if (startsWith(bytes, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) || startsWith(bytes, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61])) {
     return { bytes, extension: "gif", mimeType: "image/gif" };

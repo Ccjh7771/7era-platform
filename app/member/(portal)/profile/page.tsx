@@ -28,7 +28,7 @@ export default async function MemberProfilePage() {
           </span>
           <h2 className="mt-4 text-2xl font-black">{member.fullName}</h2>
           <p className="mt-1 text-zinc-500">7ERA Member</p>
-          <AvatarUpload memberId={member.id} hasAvatar={Boolean(avatarUrl)} />
+          <AvatarUpload hasAvatar={Boolean(avatarUrl)} />
         </div>
 
         <dl className="divide-y divide-white/10 px-6">

@@ -1,11 +1,14 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireOwner } from "@/lib/admin/access";
+import {
+    getManagedCmsLogoPath,
+    removeCmsLogo,
+    uploadCmsLogo,
+} from "@/lib/admin/cms-logo-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type WebsiteSettingsInput = {
@@ -27,20 +30,9 @@ type WebsiteSettingsInput = {
     copyright_text: string;
 };
 
-type UploadedLogo = {
-    objectPath: string;
-    publicUrl: string;
-};
-
 const logoBucket = "site-assets";
 const storageHostname = "imkfmynzsnjckdzctwpp.supabase.co";
-const maximumLogoSize = 2 * 1024 * 1024;
 const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-const logoExtensions: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-};
 
 function isValidDestination(value: string) {
     if (
@@ -162,111 +154,6 @@ function parseSettingsInput(formData: FormData): WebsiteSettingsInput | null {
     return input;
 }
 
-function hasValidFileSignature(bytes: Uint8Array, mimeType: string) {
-    if (mimeType === "image/png") {
-        const signature = [
-            0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-        ];
-        return signature.every((value, index) => bytes[index] === value);
-    }
-
-    if (mimeType === "image/jpeg") {
-        return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-    }
-
-    if (mimeType === "image/webp") {
-        return (
-            String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-            String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
-        );
-    }
-
-    return false;
-}
-
-async function uploadLogo(
-    adminClient: ReturnType<typeof createAdminClient>,
-    formData: FormData,
-): Promise<
-    | { error: "invalid_logo" | "upload_failed" }
-    | { upload: UploadedLogo | null }
-> {
-    const logoFile = formData.get("logoFile");
-
-    if (!(logoFile instanceof File) || logoFile.size === 0) {
-        return { upload: null };
-    }
-
-    if (logoFile.size > maximumLogoSize) {
-        return { error: "invalid_logo" };
-    }
-
-    const bytes = new Uint8Array(await logoFile.arrayBuffer());
-    const detectedLogoType = Object.entries(logoExtensions).find(
-        ([mimeType]) => hasValidFileSignature(bytes, mimeType),
-    );
-
-    if (!detectedLogoType) {
-        return { error: "invalid_logo" };
-    }
-
-    const [mimeType, extension] = detectedLogoType;
-
-    const objectPath = `logos/${randomUUID()}.${extension}`;
-    const { error } = await adminClient.storage
-        .from(logoBucket)
-        .upload(objectPath, bytes, {
-            cacheControl: "31536000",
-            contentType: mimeType,
-            upsert: false,
-        });
-
-    if (error) {
-        console.error("Unable to upload website logo:", error.message);
-        return { error: "upload_failed" };
-    }
-
-    const { data } = adminClient.storage
-        .from(logoBucket)
-        .getPublicUrl(objectPath);
-
-    return {
-        upload: { objectPath, publicUrl: data.publicUrl },
-    };
-}
-
-function getManagedLogoPath(logoUrl: string) {
-    try {
-        const url = new URL(logoUrl);
-        const marker = `/storage/v1/object/public/${logoBucket}/`;
-
-        if (
-            url.protocol !== "https:" ||
-            url.hostname !== storageHostname ||
-            !url.pathname.startsWith(marker)
-        ) {
-            return null;
-        }
-
-        return decodeURIComponent(url.pathname.slice(marker.length));
-    } catch {
-        return null;
-    }
-}
-
-async function removeLogo(
-    adminClient: ReturnType<typeof createAdminClient>,
-    objectPath: string,
-) {
-    const { error } = await adminClient.storage
-        .from(logoBucket)
-        .remove([objectPath]);
-
-    if (error) {
-        console.error("Unable to remove website logo:", error.message);
-    }
-}
-
 export async function updateWebsiteSettings(formData: FormData) {
     const input = parseSettingsInput(formData);
 
@@ -286,7 +173,14 @@ export async function updateWebsiteSettings(formData: FormData) {
         redirect("/admin/settings?error=server");
     }
 
-    const logoResult = await uploadLogo(adminClient, formData);
+    const logoResult = await uploadCmsLogo({
+        adminClient,
+        bucket: logoBucket,
+        folder: "logos",
+        formData,
+        logLabel: "website",
+        required: false,
+    });
 
     if ("error" in logoResult) {
         redirect(`/admin/settings?error=${logoResult.error}`);
@@ -317,7 +211,12 @@ export async function updateWebsiteSettings(formData: FormData) {
         );
 
         if (uploadedLogo) {
-            await removeLogo(adminClient, uploadedLogo.objectPath);
+            await removeCmsLogo({
+                adminClient,
+                bucket: logoBucket,
+                logLabel: "website",
+                objectPath: uploadedLogo.objectPath,
+            });
         }
 
         redirect("/admin/settings?error=server");
@@ -328,10 +227,19 @@ export async function updateWebsiteSettings(formData: FormData) {
         (uploadedLogo || removeRequested) &&
         existing.logo_path !== nextLogoPath
     ) {
-        const previousLogoPath = getManagedLogoPath(existing.logo_path);
+        const previousLogoPath = getManagedCmsLogoPath({
+            bucket: logoBucket,
+            logoUrl: existing.logo_path,
+            storageHostname,
+        });
 
         if (previousLogoPath) {
-            await removeLogo(adminClient, previousLogoPath);
+            await removeCmsLogo({
+                adminClient,
+                bucket: logoBucket,
+                logLabel: "website",
+                objectPath: previousLogoPath,
+            });
         }
     }
 

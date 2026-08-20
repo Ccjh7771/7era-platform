@@ -15,6 +15,17 @@ type UploadedCmsLogo = {
     publicUrl: string;
 };
 
+type UploadCmsImageOptions = {
+    adminClient: AdminClient;
+    bucket: string;
+    fileField?: string;
+    folder: string;
+    formData: FormData;
+    logLabel: string;
+    maximumBytes?: number;
+    required: boolean;
+};
+
 type UploadCmsLogoOptions = {
     adminClient: AdminClient;
     bucket: string;
@@ -33,39 +44,50 @@ export type UploadCmsLogoResult =
       }
     | { upload: UploadedCmsLogo | null };
 
-export async function uploadCmsLogo({
+export type UploadCmsImageResult =
+    | {
+          error:
+              | "invalid_image"
+              | "image_too_large"
+              | "upload_failed";
+      }
+    | { upload: UploadedCmsLogo | null };
+
+export async function uploadCmsImage({
     adminClient,
     bucket,
+    fileField = "imageFile",
     folder,
     formData,
     logLabel,
+    maximumBytes = cmsImageMaximumBytes,
     required,
-}: UploadCmsLogoOptions): Promise<UploadCmsLogoResult> {
-    const logoFile = formData.get("logoFile");
+}: UploadCmsImageOptions): Promise<UploadCmsImageResult> {
+    const imageFile = formData.get(fileField);
 
-    if (!(logoFile instanceof File) || logoFile.size === 0) {
+    if (!(imageFile instanceof File) || imageFile.size === 0) {
         return required
-            ? { error: "invalid_logo" }
+            ? { error: "invalid_image" }
             : { upload: null };
     }
 
-    if (logoFile.size > cmsImageMaximumBytes) {
-        return { error: "logo_too_large" };
+    if (imageFile.size > maximumBytes) {
+        return { error: "image_too_large" };
     }
 
     let bytes: Uint8Array;
 
     try {
-        bytes = new Uint8Array(await logoFile.arrayBuffer());
+        bytes = new Uint8Array(await imageFile.arrayBuffer());
     } catch (error) {
-        console.error(`Unable to read ${logLabel} logo:`, error);
+        console.error(`Unable to read ${logLabel} image:`, error);
         return { error: "upload_failed" };
     }
 
     const detectedType = detectCmsImageType(bytes);
 
     if (!detectedType) {
-        return { error: "invalid_logo" };
+        return { error: "invalid_image" };
     }
 
     const objectPath = `${folder}/${randomUUID()}.${detectedType.extension}`;
@@ -81,13 +103,13 @@ export async function uploadCmsLogo({
 
         if (error) {
             console.error(
-                `Unable to upload ${logLabel} logo:`,
+                `Unable to upload ${logLabel} image:`,
                 error.message,
             );
             return { error: "upload_failed" };
         }
     } catch (error) {
-        console.error(`Unable to upload ${logLabel} logo:`, error);
+        console.error(`Unable to upload ${logLabel} image:`, error);
         return { error: "upload_failed" };
     }
 
@@ -101,6 +123,39 @@ export async function uploadCmsLogo({
             publicUrl: data.publicUrl,
         },
     };
+}
+
+export async function uploadCmsLogo({
+    adminClient,
+    bucket,
+    folder,
+    formData,
+    logLabel,
+    required,
+}: UploadCmsLogoOptions): Promise<UploadCmsLogoResult> {
+    const result = await uploadCmsImage({
+        adminClient,
+        bucket,
+        fileField: "logoFile",
+        folder,
+        formData,
+        logLabel,
+        required,
+    });
+
+    if (!("error" in result)) {
+        return result;
+    }
+
+    if (result.error === "invalid_image") {
+        return { error: "invalid_logo" };
+    }
+
+    if (result.error === "image_too_large") {
+        return { error: "logo_too_large" };
+    }
+
+    return { error: "upload_failed" };
 }
 
 export function getManagedCmsLogoPath({
@@ -134,6 +189,22 @@ export function getManagedCmsLogoPath({
     }
 }
 
+export function getManagedCmsImagePath({
+    bucket,
+    imageUrl,
+    storageHostname,
+}: {
+    bucket: string;
+    imageUrl: string;
+    storageHostname: string;
+}) {
+    return getManagedCmsLogoPath({
+        bucket,
+        logoUrl: imageUrl,
+        storageHostname,
+    });
+}
+
 export async function removeCmsLogo({
     adminClient,
     bucket,
@@ -159,4 +230,23 @@ export async function removeCmsLogo({
     } catch (error) {
         console.error(`Unable to remove ${logLabel} logo:`, error);
     }
+}
+
+export async function removeCmsImage({
+    adminClient,
+    bucket,
+    logLabel,
+    objectPath,
+}: {
+    adminClient: AdminClient;
+    bucket: string;
+    logLabel: string;
+    objectPath: string;
+}) {
+    return removeCmsLogo({
+        adminClient,
+        bucket,
+        logLabel,
+        objectPath,
+    });
 }

@@ -50,7 +50,7 @@ export default async function AdminLuckySpinPage({ searchParams }: { searchParam
       <h1 className="mt-3 text-3xl font-black">Lucky Spin</h1>
       <p className="mt-2 text-sm text-zinc-500">Up to 12 prizes plus one required Thank You segment. All daily limits follow Malaysia time.</p>
       {params.success && <p className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">Lucky Spin updated successfully.</p>}
-      {params.error && <p className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{params.error === "prizes_required" ? "Add at least one prize and one Thank You segment before activating the campaign." : "Unable to save the requested change."}</p>}
+      {params.error && <p className="mt-6 rounded-2xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{params.error === "prizes_required" ? "Add at least one prize and one Thank You segment before activating the campaign." : params.error === "image_too_large" ? "This Lucky Spin image is larger than 3MB. Choose a smaller image." : params.error === "invalid_image" ? "Choose a genuine PNG, JPG or WebP Lucky Spin image." : params.error === "upload_failed" ? "The Lucky Spin image could not be uploaded. Please try again." : "Unable to save the requested change."}</p>}
 
       <form action={updateSpinCampaign} className="mt-8 grid gap-5 rounded-[28px] border border-white/10 bg-white/[0.04] p-6 lg:grid-cols-3">
         <input type="hidden" name="campaignId" value={campaign.id} />

@@ -7,6 +7,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { useFormStatus } from "react-dom";
 
 import {
     cmsImageAccept,
@@ -15,11 +16,16 @@ import {
 } from "@/lib/cms-image";
 
 type CmsLogoUploadFieldProps = {
-    currentLogoUrl?: string;
+    currentLogoUrl?: string | null;
     emptyHelpText: string;
+    emptyPreviewText?: string;
+    fieldName?: string;
     idPrefix: string;
     label: string;
+    maximumBytes?: number;
+    objectFit?: "contain" | "cover";
     previewAlt: string;
+    previewVariant?: "square" | "wide";
     required?: boolean;
 };
 
@@ -30,9 +36,14 @@ function formatFileSize(bytes: number) {
 export function CmsLogoUploadField({
     currentLogoUrl,
     emptyHelpText,
+    emptyPreviewText = "Image preview",
+    fieldName = "logoFile",
     idPrefix,
     label,
+    maximumBytes = cmsImageMaximumBytes,
+    objectFit = "contain",
     previewAlt,
+    previewVariant = "square",
     required = false,
 }: CmsLogoUploadFieldProps) {
     const [previewUrl, setPreviewUrl] =
@@ -41,6 +52,7 @@ export function CmsLogoUploadField({
     const [validationError, setValidationError] = useState("");
     const objectUrlRef = useRef<string | null>(null);
     const selectionIdRef = useRef(0);
+    const { pending } = useFormStatus();
 
     function releasePreviewUrl() {
         if (objectUrlRef.current) {
@@ -73,11 +85,11 @@ export function CmsLogoUploadField({
             return;
         }
 
-        if (file.size > cmsImageMaximumBytes) {
+        if (file.size > maximumBytes) {
             input.value = "";
             setPreviewUrl(currentLogoUrl ?? "");
             setValidationError(
-                `This image is ${formatFileSize(file.size)}. Choose an image up to 2MB.`,
+                `This image is ${formatFileSize(file.size)}. Choose an image up to ${formatFileSize(maximumBytes)}.`,
             );
             return;
         }
@@ -115,42 +127,48 @@ export function CmsLogoUploadField({
         }
     }
 
-    const helpId = `${idPrefix}-logo-help`;
-    const errorId = `${idPrefix}-logo-error`;
+    const inputId = `${idPrefix}-${fieldName}-file`;
+    const helpId = `${idPrefix}-${fieldName}-help`;
+    const errorId = `${idPrefix}-${fieldName}-error`;
+    const previewClassName = previewVariant === "wide"
+        ? "relative flex h-28 w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/50 sm:w-48"
+        : "flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/50 p-2";
 
     return (
         <div className="sm:col-span-2">
             <label
-                htmlFor={`${idPrefix}-logo-file`}
+                htmlFor={inputId}
                 className="text-sm font-semibold text-zinc-200"
             >
                 {label}
             </label>
 
             <div className="mt-3 flex flex-col gap-4 rounded-2xl border border-dashed border-white/15 bg-black/30 p-4 sm:flex-row sm:items-center">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/50 p-2">
+                <div className={previewClassName}>
                     {previewUrl ? (
                         <Image
                             src={previewUrl}
                             alt={previewAlt}
-                            width={88}
-                            height={88}
+                            {...(previewVariant === "wide"
+                                ? { fill: true, sizes: "192px" }
+                                : { width: 88, height: 88 })}
                             unoptimized={previewUrl.startsWith("blob:")}
-                            className="h-full w-full object-contain"
+                            className={`h-full w-full ${objectFit === "cover" ? "object-cover" : "object-contain"}`}
                         />
                     ) : (
                         <span className="text-center text-xs text-zinc-600">
-                            Logo preview
+                            {emptyPreviewText}
                         </span>
                     )}
                 </div>
 
                 <div className="min-w-0 flex-1">
                     <input
-                        id={`${idPrefix}-logo-file`}
-                        name="logoFile"
+                        id={inputId}
+                        name={fieldName}
                         type="file"
                         required={required}
+                        disabled={pending}
                         accept={cmsImageAccept}
                         aria-describedby={`${helpId}${validationError ? ` ${errorId}` : ""}`}
                         aria-invalid={validationError ? true : undefined}
@@ -162,7 +180,7 @@ export function CmsLogoUploadField({
                         id={helpId}
                         className="mt-2 text-xs leading-5 text-zinc-500"
                     >
-                        PNG, JPG or WebP. Maximum 2MB. {emptyHelpText}
+                        PNG, JPG or WebP. Maximum {formatFileSize(maximumBytes)}. {emptyHelpText}
                     </p>
 
                     {selectedFileLabel && (
