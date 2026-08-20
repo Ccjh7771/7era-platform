@@ -2,9 +2,15 @@ export const sectionStyles =
   `
   relative
   mx-auto
+  w-full
   max-w-7xl
-  px-6
-  py-28
+  px-4
+  py-16
+
+  sm:px-6
+  sm:py-24
+
+  lg:py-28
   `;
 
 export const badgeStyles =
@@ -49,9 +55,12 @@ export const subtitleStyles =
 
 export const gridStyles =
   `
-  mt-16
+  mt-10
   grid
-  gap-8
+  gap-5
+
+  sm:mt-16
+  sm:gap-8
   md:grid-cols-2
   xl:grid-cols-4
   `;
