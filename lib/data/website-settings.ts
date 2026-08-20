@@ -37,6 +37,6 @@ export const defaultWebsiteSettings: WebsiteSettings = {
   seoTitle: "7ERA Platform",
   seoDescription:
     "Premium gaming platform featuring trusted brands, mobile game downloads and 24/7 customer support.",
-  siteUrl: "https://7era-platform.vercel.app",
+  siteUrl: "https://7era.vip",
   copyrightText: "© 2018 7ERA Platform. All Rights Reserved.",
 };
