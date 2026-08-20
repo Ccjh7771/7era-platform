@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl = "https://7era-platform.vercel.app";
+const siteUrl = "https://7era.vip";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = ["", "/download", "/promotions", "/privacy", "/terms", "/responsible-gaming"];
