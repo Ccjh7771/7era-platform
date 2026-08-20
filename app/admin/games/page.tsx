@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { AdminSubmitButton } from "@/app/admin/_components/AdminSubmitButton";
 import { requireAdmin } from "@/lib/admin/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -34,6 +35,8 @@ const errorMessages: Record<string, string> = {
     duplicate: "A game with this name or slug already exists.",
     invalid_logo:
         "Choose a valid PNG, JPG or WebP image up to 2MB.",
+    logo_too_large:
+        "The selected image is larger than 2MB. Choose a smaller image.",
     upload_failed:
         "The game logo could not be uploaded. Please try again.",
     server: "The game could not be saved. Please try again.",
@@ -271,12 +274,12 @@ export default async function AdminGamesPage({
                     </summary>
                     <form action={createGame} className="mt-7">
                         <GameFields idPrefix="new-game" />
-                        <button
-                            type="submit"
+                        <AdminSubmitButton
+                            pendingLabel="Creating game..."
                             className="mt-6 flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 px-6 text-sm font-black text-black transition hover:scale-[1.01]"
                         >
                             Create game
-                        </button>
+                        </AdminSubmitButton>
                     </form>
                 </details>
             )}
@@ -341,14 +344,14 @@ export default async function AdminGamesPage({
                                         name="requestedStatus"
                                         value={game.is_active ? "inactive" : "active"}
                                     />
-                                    <button
-                                        type="submit"
+                                    <AdminSubmitButton
+                                        pendingLabel="Updating..."
                                         className="rounded-xl border border-white/10 px-4 py-2 text-xs font-bold text-zinc-300 transition hover:border-yellow-400/30 hover:text-yellow-300"
                                     >
                                         {game.is_active
                                             ? "Hide from website"
                                             : "Show on website"}
-                                    </button>
+                                    </AdminSubmitButton>
                                 </form>
 
                                 <details className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-5">
@@ -365,12 +368,12 @@ export default async function AdminGamesPage({
                                             game={game}
                                             idPrefix={`game-${game.id}`}
                                         />
-                                        <button
-                                            type="submit"
+                                        <AdminSubmitButton
+                                            pendingLabel="Saving changes..."
                                             className="mt-6 flex h-12 items-center justify-center rounded-xl bg-white px-6 text-sm font-black text-black transition hover:bg-yellow-300"
                                         >
                                             Save changes
-                                        </button>
+                                        </AdminSubmitButton>
                                     </form>
                                 </details>
                             </div>

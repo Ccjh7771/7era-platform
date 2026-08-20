@@ -1,11 +1,14 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireContentEditor } from "@/lib/admin/access";
+import {
+    getManagedCmsLogoPath,
+    removeCmsLogo,
+    uploadCmsLogo,
+} from "@/lib/admin/cms-logo-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type GameInput = {
@@ -17,20 +20,9 @@ type GameInput = {
     sort_order: number;
 };
 
-type UploadedLogo = {
-    objectPath: string;
-    publicUrl: string;
-};
-
 const logoBucket = "game-logos";
 const storageHostname =
     "imkfmynzsnjckdzctwpp.supabase.co";
-const maximumLogoSize = 2 * 1024 * 1024;
-const logoExtensions: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-};
 
 function isValidLink(value: string) {
     if (value === "#") {
@@ -86,133 +78,39 @@ function parseGameInput(formData: FormData): GameInput | null {
     };
 }
 
-function hasValidFileSignature(
-    bytes: Uint8Array,
-    mimeType: string,
-) {
-    if (mimeType === "image/png") {
-        const signature = [
-            0x89,
-            0x50,
-            0x4e,
-            0x47,
-            0x0d,
-            0x0a,
-            0x1a,
-            0x0a,
-        ];
-
-        return signature.every(
-            (value, index) => bytes[index] === value,
-        );
-    }
-
-    if (mimeType === "image/jpeg") {
-        return (
-            bytes[0] === 0xff &&
-            bytes[1] === 0xd8 &&
-            bytes[2] === 0xff
-        );
-    }
-
-    if (mimeType === "image/webp") {
-        return (
-            String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
-            String.fromCharCode(...bytes.slice(8, 12)) === "WEBP"
-        );
-    }
-
-    return false;
-}
-
 async function uploadLogo(
     adminClient: ReturnType<typeof createAdminClient>,
     formData: FormData,
     required: boolean,
-): Promise<
-    | { error: "invalid_logo" | "upload_failed" }
-    | { upload: UploadedLogo | null }
-> {
-    const logoFile = formData.get("logoFile");
-
-    if (!(logoFile instanceof File) || logoFile.size === 0) {
-        return required
-            ? { error: "invalid_logo" }
-            : { upload: null };
-    }
-
-    if (logoFile.size > maximumLogoSize) {
-        return { error: "invalid_logo" };
-    }
-
-    const bytes = new Uint8Array(await logoFile.arrayBuffer());
-    const detectedLogoType = Object.entries(logoExtensions).find(
-        ([mimeType]) => hasValidFileSignature(bytes, mimeType),
-    );
-
-    if (!detectedLogoType) {
-        return { error: "invalid_logo" };
-    }
-
-    const [mimeType, extension] = detectedLogoType;
-
-    const objectPath = `games/${randomUUID()}.${extension}`;
-    const { error } = await adminClient.storage
-        .from(logoBucket)
-        .upload(objectPath, bytes, {
-            cacheControl: "31536000",
-            contentType: mimeType,
-            upsert: false,
-        });
-
-    if (error) {
-        console.error("Unable to upload game logo:", error.message);
-        return { error: "upload_failed" };
-    }
-
-    const { data } = adminClient.storage
-        .from(logoBucket)
-        .getPublicUrl(objectPath);
-
-    return {
-        upload: {
-            objectPath,
-            publicUrl: data.publicUrl,
-        },
-    };
+) {
+    return uploadCmsLogo({
+        adminClient,
+        bucket: logoBucket,
+        folder: "games",
+        formData,
+        logLabel: "game",
+        required,
+    });
 }
 
 function getManagedLogoPath(logoUrl: string) {
-    try {
-        const url = new URL(logoUrl);
-        const marker =
-            `/storage/v1/object/public/${logoBucket}/`;
-
-        if (
-            url.protocol !== "https:" ||
-            url.hostname !== storageHostname ||
-            !url.pathname.startsWith(marker)
-        ) {
-            return null;
-        }
-
-        return decodeURIComponent(url.pathname.slice(marker.length));
-    } catch {
-        return null;
-    }
+    return getManagedCmsLogoPath({
+        bucket: logoBucket,
+        logoUrl,
+        storageHostname,
+    });
 }
 
 async function removeLogo(
     adminClient: ReturnType<typeof createAdminClient>,
     objectPath: string,
 ) {
-    const { error } = await adminClient.storage
-        .from(logoBucket)
-        .remove([objectPath]);
-
-    if (error) {
-        console.error("Unable to remove game logo:", error.message);
-    }
+    await removeCmsLogo({
+        adminClient,
+        bucket: logoBucket,
+        logLabel: "game",
+        objectPath,
+    });
 }
 
 async function requireGameEditor() {
