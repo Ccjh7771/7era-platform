@@ -63,18 +63,40 @@ export const brandNameStyles =
   `
   mt-7
   text-2xl
-  font-bold
+  font-black
+  leading-tight
   tracking-tight
   text-white
+
+  sm:text-[1.75rem]
   `;
 
 export const descriptionStyles =
   `
-  mt-4
-  min-h-[72px]
-  text-sm
-  leading-7
-  text-zinc-400
+  mt-5
+  flex
+  min-h-[112px]
+  w-full
+  items-center
+  justify-center
+  break-words
+  whitespace-pre-line
+  rounded-2xl
+  border
+  border-white/[0.06]
+  bg-black/25
+  px-5
+  py-4
+  text-base
+  font-medium
+  leading-8
+  text-zinc-300
+  [text-wrap:balance]
+
+  sm:min-h-[128px]
+  sm:px-6
+  sm:text-lg
+  sm:leading-9
   `;
 
 export const ratingWrapperStyles =
